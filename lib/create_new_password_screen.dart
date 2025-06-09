@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart'; // <-- Import this
 import 'login_body.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
@@ -78,7 +79,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
             ),
             SizedBox(height: 30),
             Text("  Password", style: TextStyle(fontSize: 16)),
-            SizedBox(height: 3),
             TextField(
               controller: passwordController,
               obscureText: _obscurePassword,
@@ -110,7 +110,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
             ),
             SizedBox(height: 20),
             Text("  Confirm Password", style: TextStyle(fontSize: 16)),
-            SizedBox(height: 3),
             TextField(
               controller: confirmPasswordController,
               obscureText: _obscureConfirmPassword,
@@ -144,11 +143,12 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginBody()),
-                );
-              },
+                  // Replace current screen with LoginScreen
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginBody()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF6CA89A),
                   padding: EdgeInsets.symmetric(horizontal: 110, vertical: 17),

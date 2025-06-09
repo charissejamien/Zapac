@@ -26,7 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
             title: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/logoo.png', height: 130),
+              Image.asset('assets/logo.png', height: 100,),
                 SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
