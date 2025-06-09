@@ -142,7 +142,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Replace current screen with LoginScreen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => LoginBody()),
