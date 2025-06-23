@@ -5,6 +5,8 @@ import 'reset_password_screen.dart';
 
 
 class LoginBody extends StatefulWidget {
+  const LoginBody({super.key});
+
   @override
   _LoginBodyState createState() => _LoginBodyState();
 }
