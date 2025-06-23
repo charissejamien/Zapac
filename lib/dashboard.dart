@@ -79,7 +79,7 @@ class _DashboardState extends State<Dashboard> {
       ),
 
       // Bottom navigation bar
-      bottomNavigationBar: const _BottomNavBar(),
+      bottomNavigationBar: const BottomNavBar(),
 
       // Main body: full-screen map, floating overlays
       body: SafeArea(
@@ -145,7 +145,7 @@ class _DashboardState extends State<Dashboard> {
               top: 12,
               left: 19,
               right: 19,
-              child: _SearchBar(),
+              child: SearchBar(),
             ),
           ],
         ),
@@ -155,14 +155,22 @@ class _DashboardState extends State<Dashboard> {
 }
 
 // --- Search Bar Widget ---
-class _SearchBar extends StatefulWidget {
-  const _SearchBar({super.key});
+class SearchBar extends StatefulWidget {
+  const SearchBar({super.key});
 
   @override
-  State<_SearchBar> createState() => _SearchBarState();
+  State<SearchBar> createState() => _SearchBarState();
 }
 
-class _SearchBarState extends State<_SearchBar> {
+class _SearchBarState extends State<SearchBar> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose(){
+    _searchController.dispose();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     
@@ -181,17 +189,33 @@ class _SearchBarState extends State<_SearchBar> {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Row(
               children: [
-                Icon(Icons.search, color: Color(0xFF6CA89A)),
-                SizedBox(width: 8),
-                Text(
-                  'Where to?',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+                const Icon(Icons.search, color: Color(0xFF6CA89A)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Where to?',
+                      hintStyle: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    onSubmitted: (value) {
+                      print('Search quary submitted: $value');
+                    }
                   ),
                 ),
               ],
@@ -213,8 +237,25 @@ class _SearchBarState extends State<_SearchBar> {
 }
 
 // --- Bottom Navigation Bar Widget ---
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar({Key? key}) : super(key: key);
+class BottomNavBar extends StatefulWidget {
+  const BottomNavBar({Key? key}) : super(key: key);
+
+  @override
+  State<BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> {
+  // _selectedIndex will keep track of which icon is currently active
+  int _selectedIndex = 0; // Start with the first icon (home) selected
+
+  // Function to handle tap events on the navigation icons
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index; // Update the selected index
+      // In a real application, you would also likely navigate to a different screen here
+      print('Selected index: $_selectedIndex'); // For demonstration
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,10 +269,37 @@ class _BottomNavBar extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: const [
-          Icon(Icons.home, size: 30, color: Colors.white),
-          Icon(Icons.bookmark, size: 30, color: Colors.white),
-          Icon(Icons.menu, size: 30, color: Colors.white),
+        children: [
+          // Home Icon
+          GestureDetector(
+            onTap: () => _onItemTapped(0), // Set index to 0 when tapped
+            child: Icon(
+              Icons.home,
+              size: 30,
+              // Change color based on selection
+              color: _selectedIndex == 0 ? Colors.tealAccent[100] : Colors.white,
+            ),
+          ),
+          // Bookmark Icon
+          GestureDetector(
+            onTap: () => _onItemTapped(1), // Set index to 1 when tapped
+            child: Icon(
+              Icons.bookmark,
+              size: 30,
+              // Change color based on selection
+              color: _selectedIndex == 1 ? Colors.tealAccent[100] : Colors.white,
+            ),
+          ),
+          // Menu Icon
+          GestureDetector(
+            onTap: () => _onItemTapped(2), // Set index to 2 when tapped
+            child: Icon(
+              Icons.menu,
+              size: 30,
+              // Change color based on selection
+              color: _selectedIndex == 2 ? Colors.tealAccent[100] : Colors.white,
+            ),
+          ),
         ],
       ),
     );
