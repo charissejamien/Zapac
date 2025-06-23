@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart';
+import 'package:zapac/dashboard.dart';
 
 void main() {
   runApp(MaterialApp(
-    home: AuthScreen(),
+    home: MyApp(),
     debugShowCheckedModeBanner: false,
   ));
 }

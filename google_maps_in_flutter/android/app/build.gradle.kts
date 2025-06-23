@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.example.zapac"
+    namespace = "com.example.google_maps_in_flutter"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -22,12 +22,12 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.google_maps_in_flutter"
-        // Minimum Android version for Google Maps SDK
-        // https://developers.google.com/maps/flutter-package/config#android
-        minSdk = 21
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     buildTypes {
