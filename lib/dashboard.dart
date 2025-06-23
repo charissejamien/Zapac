@@ -155,11 +155,17 @@ class _DashboardState extends State<Dashboard> {
 }
 
 // --- Search Bar Widget ---
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({Key? key}) : super(key: key);
+class _SearchBar extends StatefulWidget {
+  const _SearchBar({super.key});
 
   @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  @override
   Widget build(BuildContext context) {
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: ShapeDecoration(
@@ -176,13 +182,19 @@ class _SearchBar extends StatelessWidget {
       child: Row(
         children: [
           const Expanded(
-            child: Text(
-              'Where to?',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: Color(0xFF6CA89A)),
+                SizedBox(width: 8),
+                Text(
+                  'Where to?',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
@@ -192,7 +204,7 @@ class _SearchBar extends StatelessWidget {
               color: Color(0xFF6CA89A),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.search, color: Colors.white),
+            child: const Icon(Icons.account_circle, color: Colors.white),
           ),
         ],
       ),
