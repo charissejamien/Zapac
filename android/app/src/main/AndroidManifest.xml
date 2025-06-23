@@ -7,10 +7,18 @@
         android:label="zapac"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+<<<<<<< HEAD
         
          <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc"/>
+=======
+
+        <!-- TODO: Add your Google Maps API key here -->
+        <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc"/>
+               
+>>>>>>> 0be036ff8d173c1d59b211b073026a5356f4f49c
         <activity
             android:name=".MainActivity"
             android:exported="true"

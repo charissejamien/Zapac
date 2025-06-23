@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:zapac/dashboard.dart';
 import 'reset_password_screen.dart';
 
 
@@ -20,7 +21,7 @@ class _LoginBodyState extends State<LoginBody> {
       padding: const EdgeInsets.all(20),
       child: ListView(
         children: [
-          SizedBox(height: 20),
+          //SizedBox(height: 20),
           Center(
             child: Text(
               "Welcome Back!",
@@ -77,7 +78,12 @@ class _LoginBodyState extends State<LoginBody> {
           ),
           SizedBox(height: 50),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Dashboard()),
+                      );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF6CA89A),
               padding: EdgeInsets.symmetric(vertical: 15),

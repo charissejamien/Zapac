@@ -26,7 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
             title: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              Image.asset('assets/logo.png', height: 100,),
+                Image.asset('assets/logo.png', height: 130),
                 SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -41,7 +41,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : null,
                         ),
                         child: Text(
-                          "Sign Up",
+                          "Sign Up", //this leads to the signup page
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -63,7 +63,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : null,
                         ),
                         child: Text(
-                          "Log In",
+                          "Log In", //this leads to the login page
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -82,7 +82,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        height: 80,
+        height: 75,
         decoration: BoxDecoration(
           color: Color(0xFF4A6FA5),
           borderRadius: BorderRadius.only(
