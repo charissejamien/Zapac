@@ -18,7 +18,7 @@ class _SignUpBodyState extends State<SignUpBody> {
       padding: const EdgeInsets.all(20),
       child: ListView(
         children: [
-          SizedBox(height: 20),
+          //SizedBox(height: 20),
           Center(
             child: Text(
               "Create an Account",
