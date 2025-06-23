@@ -48,10 +48,72 @@ class _ProfileState extends State<Profile> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 10,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    spacing: 142,
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(),
+                        child: Stack(),
+                      ),
+                      Container(
+                        width: 30,
+                        height: 30,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(),
+                        child: Stack(),
+                      ),
+                      Container(
+                        width: 30,
+                        height: 30,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(),
+                        child: Stack(),
+                      )
+                    ]
+                  )
+                ]
 
               )
             )
-          )
+          ),
+          Positioned(
+            left: 131,
+            top: 84,
+            child: Container(
+              width: 174,
+              height: 176,
+              decoration: ShapeDecoration(
+                color: const Color(0xFF6CA89A),
+                shape: OvalBorder()),
+            )
+          ),
+          Positioned(
+            left: 248,
+            top: 246,
+            child: Container(
+              width: 12,
+              height: 11,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(),
+              child: Stack(),
+            )
+          ),
+          Positioned(
+            left: 87,
+            top: 47,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+            ),
+          ),
         ],
       )
     );
