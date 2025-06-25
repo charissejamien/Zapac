@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'create_new_password_screen.dart';
 
 class EnterCodeScreen extends StatefulWidget {
+  const EnterCodeScreen({super.key});
+
   @override
   _EnterCodeScreenState createState() => _EnterCodeScreenState();
 }
@@ -13,8 +15,12 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
 
   @override
   void dispose() {
-    _controllers.forEach((controller) => controller.dispose());
-    _focusNodes.forEach((node) => node.dispose());
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -150,8 +156,6 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
                   );
                 }
               },
-              child: Text("Verify",
-              style: TextStyle(color: Colors.black),),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF6CA89A),
                 padding: EdgeInsets.symmetric(horizontal: 60, vertical: 15),
@@ -159,6 +163,8 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: Text("Verify",
+              style: TextStyle(color: Colors.black),),
             ),
           ],
         ),

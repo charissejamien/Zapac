@@ -4,6 +4,8 @@ import 'enter_code_screen.dart';
 class ResetPasswordScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
 
+  ResetPasswordScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

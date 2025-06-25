@@ -3,6 +3,8 @@ import 'login_body.dart'; // New login widget
 import 'signup_body.dart'; // You'll create this later
 
 class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
+
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
