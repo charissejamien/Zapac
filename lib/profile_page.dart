@@ -9,14 +9,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // TextEditingController for the full name field
   late final TextEditingController _fullNameController;
-  late final TextEditingController _emailController; // Controller for displaying email
+  late final TextEditingController _emailController;
 
-  // State variables for gender and date of birth
   String? _selectedGender;
   DateTime? _selectedDateOfBirth;
-  // No _isEmailEditing needed here anymore for the header email
 
   @override
   void initState() {
@@ -33,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   static const Color primaryColor = Color(0xFF4A6FA5);
+  static const Color accentYellow = Color(0xFFFFD700); // Define a yellow color
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +56,13 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Email address - now only tappable to open the change email dialog
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
                 onTap: () {
-                  _showChangeEmailDialog(context); // Call the new dialog method
+                  _showChangeEmailDialog(context);
                 },
                 child: Text(
                   _emailController.text,
@@ -75,15 +72,13 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(width: 4),
               const Icon(
-                Icons.edit, // Always show edit icon, tapping opens dialog
+                Icons.edit,
                 color: Colors.white,
                 size: 16,
               ),
             ],
           ),
           const SizedBox(height: 20),
-
-          // Profile picture with a white border
           CircleAvatar(
             radius: 55,
             backgroundColor: Colors.white,
@@ -93,8 +88,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 15),
-
-          // User name
           const Text(
             'Kerropi',
             style: TextStyle(
@@ -104,8 +97,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 5),
-
-          // User subtitle
           const Text(
             'Daily Commuter',
             style: TextStyle(
@@ -134,9 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: 'Full name',
                 value: _fullNameController.text,
                 controller: _fullNameController,
-                onChanged: (newValue) {
-                  // Save new name logic
-                },
+                onChanged: (newValue) {},
               ),
               const SizedBox(height: 15),
               _TappableInfoRow(
@@ -167,193 +156,257 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // New method for changing email securely
   void _showChangeEmailDialog(BuildContext context) {
-    // Declare controllers as local variables within the method
     final TextEditingController oldEmailInputController = TextEditingController(text: _emailController.text);
     final TextEditingController newEmailInputController = TextEditingController();
     final TextEditingController codeInputController = TextEditingController();
     bool codeSent = false;
-    String? errorMessage; // To display error messages in the dialog
+    String? errorMessage;
+
+    void setStateInDialog(VoidCallback fn) {
+      (context as Element).markNeedsBuild();
+      fn();
+    }
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setStateInDialog) {
-            return AlertDialog(
-              title: const Text('Change Email'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    if (errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Text(
-                          errorMessage!,
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ),
-                    TextField(
-                      controller: oldEmailInputController,
-                      decoration: const InputDecoration(
-                        labelText: 'Old Email',
-                        border: OutlineInputBorder(),
-                      ),
-                      readOnly: true,
-                    ),
-                    const SizedBox(height: 15),
-                    TextField(
-                      controller: newEmailInputController,
-                      decoration: const InputDecoration(
-                        labelText: 'New Email',
-                        hintText: 'Enter your new email',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: codeSent
-                          ? null
-                          : () {
-                              if (newEmailInputController.text.isEmpty ||
-                                  !newEmailInputController.text.contains('@')) {
-                                setStateInDialog(() {
-                                  errorMessage = 'Please enter a valid new email.';
-                                });
-                                return;
-                              }
-                              setStateInDialog(() {
-                                codeSent = true;
-                                errorMessage = null;
-                                print('Code sent to ${newEmailInputController.text}');
-                              });
-                            },
-                      child: const Text('Send Code'),
-                    ),
-                    const SizedBox(height: 15),
-                    if (codeSent)
-                      TextField(
-                        controller: codeInputController,
-                        decoration: const InputDecoration(
-                          labelText: 'Verification Code',
-                          hintText: 'Enter the 6-digit code',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                  ],
-                ),
+        return Theme(
+          data: Theme.of(dialogContext).copyWith(
+            dialogBackgroundColor: Colors.white, // White background
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: primaryColor, // Use your blue for buttons
               ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    // Dispose controllers immediately when closing via Cancel
-                    oldEmailInputController.dispose();
-                    newEmailInputController.dispose();
-                    codeInputController.dispose();
-                  },
-                ),
-                TextButton(
-                  child: const Text('Confirm Change'),
-                  onPressed: codeSent
-                      ? () {
-                          if (codeInputController.text.length != 6) {
+            ),
+            radioTheme: RadioThemeData(
+              fillColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return accentYellow; // Yellow when selected
+                  }
+                  return Colors.grey; // Gray when not selected
+                },
+              ),
+            ),
+            inputDecorationTheme: const InputDecorationTheme(
+              labelStyle: TextStyle(color: Colors.black87), // Label text color
+              hintStyle: TextStyle(color: Colors.black54), // Hint text color
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black26), // Border color when enabled
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4A6FA5)), // Border color when focused
+              ),
+            ),
+          ),
+          child: AlertDialog(
+            title: const Text(
+              'Change Email',
+              style: TextStyle(color: Colors.black), // Title text color
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: accentYellow, fontSize: 12), // Error message in yellow
+                      ),
+                    ),
+                  TextField(
+                    controller: oldEmailInputController,
+                    style: const TextStyle(color: Colors.white), // Input text color
+                    decoration: const InputDecoration(
+                      labelText: 'Old Email',
+                      border: OutlineInputBorder(),
+                    ),
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: newEmailInputController,
+                    style: const TextStyle(color: Colors.white), // Input text color
+                    decoration: const InputDecoration(
+                      labelText: 'New Email',
+                      hintText: 'Enter your new email',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: codeSent
+                        ? null
+                        : () {
+                            if (newEmailInputController.text.isEmpty ||
+                                !newEmailInputController.text.contains('@')) {
+                              setStateInDialog(() {
+                                errorMessage = 'Please enter a valid new email.';
+                              });
+                              return;
+                            }
                             setStateInDialog(() {
-                              errorMessage = 'Please enter a 6-digit verification code.';
+                              codeSent = true;
+                              errorMessage = null;
+                              print('Code sent to ${newEmailInputController.text}');
                             });
-                            return;
-                          }
-                          setState(() {
-                            _emailController.text = newEmailInputController.text;
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentYellow, // Button background color
+                      foregroundColor: primaryColor, // Button text color
+                    ),
+                    child: const Text('Send Code'),
+                  ),
+                  const SizedBox(height: 15),
+                  if (codeSent)
+                    TextField(
+                      controller: codeInputController,
+                      style: const TextStyle(color: Colors.white), // Input text color
+                      decoration: const InputDecoration(
+                        labelText: 'Verification Code',
+                        hintText: 'Enter the 6-digit code',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  oldEmailInputController.dispose();
+                  newEmailInputController.dispose();
+                  codeInputController.dispose();
+                },
+              ),
+              TextButton(
+                child: const Text('Confirm Change'),
+                onPressed: codeSent
+                    ? () {
+                        if (codeInputController.text.length != 6) {
+                          setStateInDialog(() {
+                            errorMessage = 'Please enter a 6-digit verification code.';
                           });
-                          Navigator.of(dialogContext).pop();
-                          // Dispose controllers immediately when confirming change
-                          oldEmailInputController.dispose();
-                          newEmailInputController.dispose();
-                          codeInputController.dispose();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Email successfully changed!')),
-                          );
+                          return;
                         }
-                      : null,
-                ),
-              ],
-            );
-          },
+                        setState(() {
+                          _emailController.text = newEmailInputController.text;
+                        });
+                        Navigator.of(dialogContext).pop();
+                        oldEmailInputController.dispose();
+                        newEmailInputController.dispose();
+                        codeInputController.dispose();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Email successfully changed!')),
+                        );
+                      }
+                    : null,
+              ),
+            ],
+          ),
         );
       },
-    ); // Removed the .then() callback here
+    );
   }
 
   void _showGenderSelectionDialog(BuildContext context) {
     String? tempSelectedGender = _selectedGender;
 
+    void setStateInDialog(VoidCallback fn) {
+      (context as Element).markNeedsBuild();
+      fn();
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setStateInDialog) {
-            return AlertDialog(
-              title: const Text('Select Gender'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  RadioListTile<String>(
-                    title: const Text('Male'),
-                    value: 'Male',
-                    groupValue: tempSelectedGender,
-                    onChanged: (String? value) {
-                      setStateInDialog(() {
-                        tempSelectedGender = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Female'),
-                    value: 'Female',
-                    groupValue: tempSelectedGender,
-                    onChanged: (String? value) {
-                      setStateInDialog(() {
-                        tempSelectedGender = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Prefer not to say'),
-                    value: 'Prefer not to say',
-                    groupValue: tempSelectedGender,
-                    onChanged: (String? value) {
-                      setStateInDialog(() {
-                        tempSelectedGender = value;
-                      });
-                    },
-                  ),
-                ],
+        return Theme( // Wrap AlertDialog with Theme
+          data: Theme.of(dialogContext).copyWith(
+            dialogBackgroundColor: primaryColor.withOpacity(0.9), // Slightly transparent blue background
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, // Text button color
               ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                ),
-                TextButton(
-                  child: const Text('OK'),
-                  onPressed: () {
-                    setState(() {
-                      _selectedGender = tempSelectedGender;
+            ),
+            radioTheme: RadioThemeData( // Theme for Radio widgets
+              fillColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return accentYellow; // Yellow when selected
+                  }
+                  return Colors.white; // White when not selected
+                },
+              ),
+            ),
+          ),
+          child: AlertDialog(
+            title: const Text(
+              'Select Gender',
+              style: TextStyle(color: Colors.white), // Title text color
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                RadioListTile<String>(
+                  title: const Text('Male', style: TextStyle(color: Colors.white)),
+                  value: 'Male',
+                  groupValue: tempSelectedGender,
+                  onChanged: (String? value) {
+                    setStateInDialog(() {
+                      tempSelectedGender = value;
                     });
-                    Navigator.of(dialogContext).pop();
                   },
+                  activeColor: accentYellow, // Individual RadioListTile active color
+                ),
+                RadioListTile<String>(
+                  title: const Text('Female', style: TextStyle(color: Colors.white)),
+                  value: 'Female',
+                  groupValue: tempSelectedGender,
+                  onChanged: (String? value) {
+                    setStateInDialog(() {
+                      tempSelectedGender = value;
+                    });
+                  },
+                  activeColor: accentYellow,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Prefer not to say', style: TextStyle(color: Colors.white)),
+                  value: 'Prefer not to say',
+                  groupValue: tempSelectedGender,
+                  onChanged: (String? value) {
+                    setStateInDialog(() {
+                      tempSelectedGender = value;
+                    });
+                  },
+                  activeColor: accentYellow,
                 ),
               ],
-            );
-          },
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  setState(() {
+                    _selectedGender = tempSelectedGender;
+                  });
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            ],
+          ),
         );
       },
     );
@@ -371,6 +424,26 @@ class _ProfilePageState extends State<ProfilePage> {
       fieldLabelText: 'Date of Birth',
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: primaryColor,
+            colorScheme: ColorScheme.light(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: primaryColor,
+              ),
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != _selectedDateOfBirth) {
       setState(() {
