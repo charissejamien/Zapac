@@ -1,36 +1,28 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Make sure this import is present for BottomNavBar
+import 'dashboard.dart'; // your BottomNavBar
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
-
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  late final TextEditingController _fullNameController;
-  late final TextEditingController _emailController;
+  // --- your profile state
+  String _firstName = 'Kerropi';
+  String _middleName = 'P.';
+  String _lastName = 'Kokak';
+  String _email = 'kerropiandcinnamon@gmail.com';
 
   String? _selectedGender;
   DateTime? _selectedDateOfBirth;
 
-  @override
-  void initState() {
-    super.initState();
-    _fullNameController = TextEditingController(text: 'Kerropi P. Kokak');
-    _emailController = TextEditingController(text: 'kerropiandcinnamon@gmail.com');
-  }
-
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
+  // --- your brand colors
   static const Color primaryColor = Color(0xFF4A6FA5);
-  static const Color accentYellow = Color(0xFFFFD700); // Define a yellow color
+  static const Color accentYellow = Color(0xFFFFD700);
+  static const Color orangeLineColor = Color(0xFFF4BE6C);
+  static const Color greenButtonColor = Color(0xFF6CA89A);
+  static const Color coralRed = Color(0xFFE97C7C);
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(primaryColor),
+            _buildHeader(),
             _buildInfoSection(context),
           ],
         ),
@@ -48,62 +40,46 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildHeader(Color primaryColor) {
+  Widget _buildHeader() {
+    final fullName = '$_firstName ${_middleName.isNotEmpty ? '$_middleName ' : ''}$_lastName';
     return Container(
       width: double.infinity,
       color: primaryColor,
-      padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20.0),
+      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  _showChangeEmailDialog(context);
-                },
-                child: Text(
-                  _emailController.text,
+          InkWell(
+            onTap: () => _showChangeEmailDialog(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _email,
                   style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 16,
-              ),
-            ],
+                const SizedBox(width: 4),
+                const Icon(Icons.edit, color: Colors.white, size: 16),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
-          CircleAvatar(
+          const CircleAvatar(
             radius: 55,
             backgroundColor: Colors.white,
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 52,
-              backgroundImage: NetworkImage('https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg'),
+              backgroundImage: NetworkImage(
+                  'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg'),
             ),
           ),
           const SizedBox(height: 15),
-          const Text(
-            'Kerropi',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 26,
-            ),
+          Text(
+            fullName,
+            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 5),
-          const Text(
-            'Daily Commuter',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
-          ),
+          const Text('Daily Commuter', style: TextStyle(color: Colors.white70, fontSize: 16)),
         ],
       ),
     );
@@ -113,41 +89,123 @@ class _ProfilePageState extends State<ProfilePage> {
     return Expanded(
       child: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            children: [
-              _EditableInfoRow(
-                icon: Icons.person_outline,
-                label: 'Full name',
-                value: _fullNameController.text,
-                controller: _fullNameController,
-                onChanged: (newValue) {},
-              ),
-              const SizedBox(height: 15),
-              _TappableInfoRow(
-                icon: Icons.transgender,
-                label: 'Gender',
-                value: _selectedGender ?? 'Not provided',
-                onTap: () => _showGenderSelectionDialog(context),
-              ),
-              const SizedBox(height: 15),
-              _TappableInfoRow(
-                icon: Icons.cake_outlined,
-                label: 'Date of Birth',
-                value: _selectedDateOfBirth == null
-                    ? 'Not provided'
-                    : '${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.year}',
-                onTap: () => _selectDateOfBirth(context),
-              ),
-              const SizedBox(height: 15),
-              const _InfoRow(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          children: [
+            _TappableInfoRow(
+              icon: Icons.person_outline,
+              label: 'Full name',
+              value: '$_firstName $_middleName $_lastName',
+              onTap: () => _showEditFullNameSheet(context),
+            ),
+            const SizedBox(height: 15),
+            _TappableInfoRow(
+              icon: Icons.transgender,
+              label: 'Gender',
+              value: _selectedGender ?? 'Not provided',
+              onTap: () => _showGenderSelectionDialog(context),
+            ),
+            const SizedBox(height: 15),
+            _TappableInfoRow(
+              icon: Icons.cake_outlined,
+              label: 'Date of Birth',
+              value: _selectedDateOfBirth == null
+                  ? 'Not provided'
+                  : '${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.year}',
+              onTap: () => _selectDateOfBirth(context),
+            ),
+            const SizedBox(height: 15),
+            // wrap your existing red row in an InkWell
+            InkWell(
+              onTap: () => _showDeleteAccountDialog(context),
+              child: const _InfoRow(
                 icon: Icons.delete_outline,
                 value: 'Delete account',
                 valueColor: Colors.red,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ——————— Change Email dialog (as before) ———————
+  void _showChangeEmailDialog(BuildContext context) {
+    final newEmailController = TextEditingController(text: _email);
+    final newPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Change your email',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You will need to verify account again after changing your email address. Please make sure it is correct.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: newEmailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'New Email',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      style: TextButton.styleFrom(
+                        backgroundColor: coralRed,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.white, fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() => _email = newEmailController.text.trim());
+                        Navigator.of(ctx).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: greenButtonColor,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Submit', style: TextStyle(color: Colors.white, fontSize: 16)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -156,305 +214,273 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showChangeEmailDialog(BuildContext context) {
-    final TextEditingController oldEmailInputController = TextEditingController(text: _emailController.text);
-    final TextEditingController newEmailInputController = TextEditingController();
-    final TextEditingController codeInputController = TextEditingController();
-    bool codeSent = false;
-    String? errorMessage;
-
-    void setStateInDialog(VoidCallback fn) {
-      (context as Element).markNeedsBuild();
-      fn();
-    }
+  // ——————— Delete Account dialog ———————
+  void _showDeleteAccountDialog(BuildContext context) {
+    String? reason;
+    final options = [
+      'I am no longer using my account',
+      'I don’t understand how to use',
+      'ZAPAC is not available in my city',
+      'Other',
+    ];
 
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return Theme(
-          data: Theme.of(dialogContext).copyWith(
-            dialogBackgroundColor: Colors.white, // White background
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryColor, // Use your blue for buttons
-              ),
-            ),
-            radioTheme: RadioThemeData(
-              fillColor: MaterialStateProperty.resolveWith<Color>(
-                (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return accentYellow; // Yellow when selected
-                  }
-                  return Colors.grey; // Gray when not selected
-                },
-              ),
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-              labelStyle: TextStyle(color: Colors.black87), // Label text color
-              hintStyle: TextStyle(color: Colors.black54), // Hint text color
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black26), // Border color when enabled
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF4A6FA5)), // Border color when focused
-              ),
-            ),
-          ),
-          child: AlertDialog(
-            title: const Text(
-              'Change Email',
-              style: TextStyle(color: Colors.black), // Title text color
-            ),
-            content: SingleChildScrollView(
-              child: Column(
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: StatefulBuilder(
+            builder: (ctx2, setState2) {
+              return Column(
                 mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        errorMessage!,
-                        style: const TextStyle(color: accentYellow, fontSize: 12), // Error message in yellow
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Delete your Account?',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: coralRed),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'We’re really sorry to see you go. Are you sure you want to delete your account? Once you confirm, your data will be gone.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // radio options
+                  ...options.map((opt) {
+                    return RadioListTile<String>(
+                      title: Text(opt, style: TextStyle(color: Colors.grey[800])),
+                      value: opt,
+                      groupValue: reason,
+                      activeColor: coralRed,
+                      onChanged: (val) => setState2(() => reason = val),
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  }).toList(),
+
+                  const SizedBox(height: 24),
+                  // delete button
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        // TODO: call your delete-account API, then:
+                        Navigator.of(ctx).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: coralRed,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
+                      child: const Text('Delete Account', style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
-                  TextField(
-                    controller: oldEmailInputController,
-                    style: const TextStyle(color: Colors.white), // Input text color
-                    decoration: const InputDecoration(
-                      labelText: 'Old Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    readOnly: true,
                   ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: newEmailInputController,
-                    style: const TextStyle(color: Colors.white), // Input text color
-                    decoration: const InputDecoration(
-                      labelText: 'New Email',
-                      hintText: 'Enter your new email',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: codeSent
-                        ? null
-                        : () {
-                            if (newEmailInputController.text.isEmpty ||
-                                !newEmailInputController.text.contains('@')) {
-                              setStateInDialog(() {
-                                errorMessage = 'Please enter a valid new email.';
-                              });
-                              return;
-                            }
-                            setStateInDialog(() {
-                              codeSent = true;
-                              errorMessage = null;
-                              print('Code sent to ${newEmailInputController.text}');
-                            });
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accentYellow, // Button background color
-                      foregroundColor: primaryColor, // Button text color
-                    ),
-                    child: const Text('Send Code'),
-                  ),
-                  const SizedBox(height: 15),
-                  if (codeSent)
-                    TextField(
-                      controller: codeInputController,
-                      style: const TextStyle(color: Colors.white), // Input text color
-                      decoration: const InputDecoration(
-                        labelText: 'Verification Code',
-                        hintText: 'Enter the 6-digit code',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
                 ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ——————— Full name bottom sheet (unchanged) ———————
+  void _showEditFullNameSheet(BuildContext context) async {
+    final firstCtrl = TextEditingController(text: _firstName);
+    final middleCtrl = TextEditingController(text: _middleName);
+    final lastCtrl = TextEditingController(text: _lastName);
+
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 50,
+                height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: orangeLineColor,
+                  borderRadius: BorderRadius.circular(5),
+                ),
               ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  oldEmailInputController.dispose();
-                  newEmailInputController.dispose();
-                  codeInputController.dispose();
-                },
+              const Text(
+                'Edit your data',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
               ),
-              TextButton(
-                child: const Text('Confirm Change'),
-                onPressed: codeSent
-                    ? () {
-                        if (codeInputController.text.length != 6) {
-                          setStateInDialog(() {
-                            errorMessage = 'Please enter a 6-digit verification code.';
-                          });
-                          return;
-                        }
-                        setState(() {
-                          _emailController.text = newEmailInputController.text;
-                        });
-                        Navigator.of(dialogContext).pop();
-                        oldEmailInputController.dispose();
-                        newEmailInputController.dispose();
-                        codeInputController.dispose();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Email successfully changed!')),
-                        );
-                      }
-                    : null,
+              const SizedBox(height: 20),
+              _buildNameTextField(controller: firstCtrl, labelText: 'First name'),
+              const SizedBox(height: 15),
+              _buildNameTextField(controller: middleCtrl, labelText: 'Middle name'),
+              const SizedBox(height: 15),
+              _buildNameTextField(controller: lastCtrl, labelText: 'Last name'),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(sheetCtx).pop({
+                    'first': firstCtrl.text.trim(),
+                    'middle': middleCtrl.text.trim(),
+                    'last': lastCtrl.text.trim(),
+                  }),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: greenButtonColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('OK'),
+                ),
               ),
             ],
           ),
         );
       },
     );
+
+    if (result != null && mounted) {
+      setState(() {
+        _firstName = result['first']!;
+        _middleName = result['middle']!;
+        _lastName = result['last']!;
+      });
+    }
+    // controllers get GC’d automatically
   }
 
+  Widget _buildNameTextField({
+    required TextEditingController controller,
+    required String labelText,
+  }) =>
+      TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: labelText,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          enabledBorder:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor)),
+          focusedBorder:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor)),
+        ),
+      );
+
+  // ——————— Gender sheet & Date picker (unchanged) ———————
   void _showGenderSelectionDialog(BuildContext context) {
-    String? tempSelectedGender = _selectedGender;
-
-    void setStateInDialog(VoidCallback fn) {
-      (context as Element).markNeedsBuild();
-      fn();
-    }
-
-    showDialog(
+    String? temp = _selectedGender;
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return Theme( // Wrap AlertDialog with Theme
-          data: Theme.of(dialogContext).copyWith(
-            dialogBackgroundColor: primaryColor.withOpacity(0.9), // Slightly transparent blue background
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white, // Text button color
-              ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx2, setState2) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            radioTheme: RadioThemeData( // Theme for Radio widgets
-              fillColor: MaterialStateProperty.resolveWith<Color>(
-                (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return accentYellow; // Yellow when selected
-                  }
-                  return Colors.white; // White when not selected
-                },
-              ),
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
             ),
-          ),
-          child: AlertDialog(
-            title: const Text(
-              'Select Gender',
-              style: TextStyle(color: Colors.white), // Title text color
-            ),
-            content: Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
+              children: [
+                Container(
+                  width: 50,
+                  height: 5,
+                  margin: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: orangeLineColor,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                const Text('Please specify your gender',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
                 RadioListTile<String>(
-                  title: const Text('Male', style: TextStyle(color: Colors.white)),
+                  title: const Text('Male'),
                   value: 'Male',
-                  groupValue: tempSelectedGender,
-                  onChanged: (String? value) {
-                    setStateInDialog(() {
-                      tempSelectedGender = value;
-                    });
-                  },
-                  activeColor: accentYellow, // Individual RadioListTile active color
+                  groupValue: temp,
+                  activeColor: accentYellow,
+                  onChanged: (v) => setState2(() => temp = v),
+                  contentPadding: EdgeInsets.zero,
                 ),
                 RadioListTile<String>(
-                  title: const Text('Female', style: TextStyle(color: Colors.white)),
+                  title: const Text('Female'),
                   value: 'Female',
-                  groupValue: tempSelectedGender,
-                  onChanged: (String? value) {
-                    setStateInDialog(() {
-                      tempSelectedGender = value;
-                    });
-                  },
+                  groupValue: temp,
                   activeColor: accentYellow,
+                  onChanged: (v) => setState2(() => temp = v),
+                  contentPadding: EdgeInsets.zero,
                 ),
-                RadioListTile<String>(
-                  title: const Text('Prefer not to say', style: TextStyle(color: Colors.white)),
-                  value: 'Prefer not to say',
-                  groupValue: tempSelectedGender,
-                  onChanged: (String? value) {
-                    setStateInDialog(() {
-                      tempSelectedGender = value;
-                    });
-                  },
-                  activeColor: accentYellow,
-                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.of(sheetCtx).pop(), child: const Text('Cancel')),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (temp != null) {
+                          setState(() => _selectedGender = temp);
+                          Navigator.of(sheetCtx).pop();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                      child: const Text('OK', style: TextStyle(color: Colors.white)),
+                    )
+                  ],
+                )
               ],
             ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-              TextButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  setState(() {
-                    _selectedGender = tempSelectedGender;
-                  });
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Future<void> _selectDateOfBirth(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDateOfBirth ?? DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
-      helpText: 'Select Date of Birth',
-      cancelText: 'Cancel',
-      confirmText: 'Select',
-      fieldLabelText: 'Date of Birth',
-      errorFormatText: 'Enter valid date',
-      errorInvalidText: 'Enter date in valid range',
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: primaryColor,
-            colorScheme: ColorScheme.light(
-              primary: primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryColor,
-              ),
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
+      builder: (ctx, child) => Theme(
+        data: ThemeData.light().copyWith(
+          primaryColor: primaryColor,
+          colorScheme: ColorScheme.light(primary: primaryColor),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null && picked != _selectedDateOfBirth) {
-      setState(() {
-        _selectedDateOfBirth = picked;
-      });
+      setState(() => _selectedDateOfBirth = picked);
     }
   }
 }
 
-/// A reusable widget for displaying a row of information (icon, label, value).
-/// This is for static information or delete account.
+/// Static info row (used for Delete account)
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String? label;
@@ -479,20 +505,9 @@ class _InfoRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (label != null)
-                  Text(
-                    label!,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
+                if (label != null) Text(label!, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                 if (label != null) const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: valueColor,
-                    fontSize: 16,
-                    fontWeight: label != null ? FontWeight.normal : FontWeight.w500,
-                  ),
-                ),
+                Text(value, style: TextStyle(color: valueColor, fontSize: 16)),
               ],
             )
           ],
@@ -504,66 +519,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// A reusable widget for displaying an editable row of information.
-class _EditableInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-
-  const _EditableInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.controller,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.grey[600]),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  TextField(
-                    controller: controller,
-                    onChanged: onChanged,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
-      ],
-    );
-  }
-}
-
-/// A reusable widget for displaying a tappable row of information.
+/// Tappable info row (Full name, Gender, DOB)
 class _TappableInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -584,7 +540,7 @@ class _TappableInfoRow extends StatelessWidget {
         InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
                 Icon(icon, color: Colors.grey[600]),
@@ -592,23 +548,13 @@ class _TappableInfoRow extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      label,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                    ),
+                    Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                     const SizedBox(height: 2),
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
+                    Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
                   ],
                 ),
                 const Spacer(),
-                Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
               ],
             ),
           ),
