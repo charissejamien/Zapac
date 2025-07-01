@@ -4,6 +4,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:zapac/models/favorite_route.dart';
+import 'package:zapac/data/favorite_routes_data.dart';
 
 class AddNewRoutePage extends StatefulWidget {
   const AddNewRoutePage({super.key});
@@ -143,14 +144,17 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     }
   }
 
-  void _saveRoute() {
-    // (This function remains unchanged)
+ void _saveRoute() {
     if (_routeNameController.text.isEmpty || _directionsResponse == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a route name and show the route first.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a route name and show the route first.')),
+      );
       return;
     }
+
     final routeData = _directionsResponse!['routes'][0];
     final leg = routeData['legs'][0];
+
     final newRoute = FavoriteRoute(
       routeName: _routeNameController.text,
       startAddress: leg['start_address'],
@@ -160,7 +164,11 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       polylinePoints: _polylines.first.points,
       bounds: _createBounds(_polylines.first.points),
     );
-    Navigator.pop(context, newRoute);
+
+    // --- FIX: Add the new route to the shared list ---
+    favoriteRoutes.add(newRoute);
+
+    Navigator.pop(context); // Pop without returning a value
   }
 
   LatLngBounds _createBounds(List<LatLng> positions) {

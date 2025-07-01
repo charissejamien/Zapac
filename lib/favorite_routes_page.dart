@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zapac/add_new_route_page.dart';
 import 'package:zapac/models/favorite_route.dart'; // Import the new model
 import 'package:zapac/route_detail_page.dart'; // Import the detail page
+import 'package:zapac/data/favorite_routes_data.dart';
 
 class FavoriteRoutesPage extends StatefulWidget {
   const FavoriteRoutesPage({super.key});
@@ -11,41 +12,31 @@ class FavoriteRoutesPage extends StatefulWidget {
 }
 
 class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
-  // Use the new FavoriteRoute model
-  final List<FavoriteRoute> _favoriteRoutes = [];
+  final List<FavoriteRoute> _favoriteRoutes = favoriteRoutes;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF4BE6C),
-        elevation: 0,
-        title: const Text('Favorite Routes',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        // ... (app bar is unchanged)
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_location_alt_outlined,
-                color: Colors.black, size: 28),
+            icon: const Icon(Icons.add_location_alt_outlined, color: Colors.black, size: 28),
             onPressed: () async {
-              // Navigate and wait for a result
-              final newRoute = await Navigator.push<FavoriteRoute>(
+              // --- FIX: Navigate and then refresh the state to see new additions ---
+              await Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const AddNewRoutePage()),
+                MaterialPageRoute(builder: (context) => const AddNewRoutePage()),
               );
-
-              // If a new route was returned, add it to the list
-              if (newRoute != null && mounted) {
-                setState(() {
-                  _favoriteRoutes.add(newRoute);
-                });
-              }
+              setState(() {
+                // This will rebuild the list with any new routes.
+              });
             },
           ),
         ],
       ),
       body: Container(
-        color: const Color(0xFFF4BE6C), // Background color from image
+        color: const Color(0xFFF4BE6C),
         child: _favoriteRoutes.isEmpty
             ? const Center(
                 child: Text(

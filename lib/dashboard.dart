@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'profile_page.dart';
-import 'favorite_routes_page.dart';
+import 'package:zapac/data/favorite_routes_data.dart';
+import 'package:zapac/favorite_routes_page.dart';
+import 'package:zapac/models/favorite_route.dart';
+import 'package:zapac/profile_page.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 // --- Dummy Data for Chat Messages ---
 class ChatMessage {
@@ -89,16 +94,34 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   final TextEditingController _commentController = TextEditingController();
   final LatLng _initialCameraPosition = const LatLng(10.314481680817886, 123.88813209917954);
 
   bool _isSheetFullyExpanded = false;
-  String _selectedFilter = 'All'; // NEW: State for the selected filter chip
+  String _selectedFilter = 'All';
+
+  // --- State for Search and Routing ---
+  bool _isSearchActive = false;
+  final String apiKey = "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc"; // Replace with your key
+  final TextEditingController _searchController = TextEditingController();
+  List<dynamic> _predictions = [];
+  bool _isShowingRoute = false;
+  Map<String, String> _routeInfo = {};
+
+  final List<Map<String, dynamic>> _recentLocations = [
+      {'description': 'House ni Gorgeous', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+      {'description': 'House sa Gwapa', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+      {'description': 'House ni Pretty', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+      {'description': 'SM J Mall', 'place_id': 'ChIJb_MjLwtwqTMReyS2tJz13ic'},
+      {'description': 'House ni Lim', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+      {'description': 'iAcademy Cebu', 'place_id': 'ChIJ155n0wtwqTMRsP82-fG436Y'},
+      {'description': 'Ayala Malls Central Bloc', 'place_id': 'ChIJ-c52xgtwqTMR_F098xGvXD4'},
+  ];
 
   @override
   void initState() {
-
     super.initState();
     _addMarker(_initialCameraPosition, 'cebu_city_marker', 'Cebu City');
     _getCurrentLocationAndMarker();
@@ -126,21 +149,133 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void dispose() {
+    _mapController.dispose();
     _sheetController.dispose();
     _commentController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  void _collapseSheet() {
-    _sheetController.animateTo(
-      0.25, // Adjusted initial size
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
   }
 
-  // NEW: Replaced the AlertDialog with a Modal Bottom Sheet for adding comments.
-  // This UI matches the 'Full Name Edit.png' image.
+  Future<void> _getCurrentLocationAndMarker() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      LatLng currentLatLng = LatLng(position.latitude, position.longitude);
+
+      setState(() {
+        _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('current_location'),
+            position: currentLatLng,
+            infoWindow: const InfoWindow(title: 'Your Location'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          ),
+        );
+      });
+      if(mounted) {
+        _mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not get current location.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _getPredictions(String input) async {
+    if (input.isEmpty) {
+      setState(() => _predictions = []);
+      return;
+    }
+    const location = "10.3157,123.8854";
+    const radius = "30000";
+    const components = "country:ph";
+    String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&location=$location&radius=$radius&strictbounds=true&components=$components';
+    
+    try {
+      var response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200 && mounted) {
+        setState(() => _predictions = json.decode(response.body)['predictions']);
+      }
+    } catch(e) {
+      print(e);
+    }
+  }
+
+  Future<void> _showRoute(dynamic destination) async {
+    _clearRoute(resetCamera: false);
+
+    if (destination.containsKey('route')) {
+      final FavoriteRoute route = destination['route'];
+      _updateMapWithRoute(route.polylinePoints, route.bounds);
+      setState(() => _routeInfo = {'distance': route.distance, 'duration': route.duration});
+      return;
+    }
+
+    if (destination.containsKey('place')) {
+      final place = destination['place'];
+      final String placeId = place['place_id'];
+      
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      LatLng startPosition = LatLng(position.latitude, position.longitude);
+
+      String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=place_id:$placeId&key=$apiKey';
+      
+      try {
+        var response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          var decoded = json.decode(response.body);
+          final routeData = decoded['routes'][0];
+          
+          List<PointLatLng> polylineCoordinates = PolylinePoints().decodePolyline(routeData['overview_polyline']['points']);
+          List<LatLng> latLngList = polylineCoordinates.map((point) => LatLng(point.latitude, point.longitude)).toList();
+          
+          final bounds = LatLngBounds(
+              southwest: LatLng(routeData['bounds']['southwest']['lat'], routeData['bounds']['southwest']['lng']),
+              northeast: LatLng(routeData['bounds']['northeast']['lat'], routeData['bounds']['northeast']['lng']),
+          );
+          
+          _updateMapWithRoute(latLngList, bounds);
+          setState(() => _routeInfo = {'distance': routeData['legs'][0]['distance']['text'], 'duration': routeData['legs'][0]['duration']['text']});
+        }
+      } catch(e) {
+        print(e);
+      }
+    }
+  }
+
+  void _updateMapWithRoute(List<LatLng> points, LatLngBounds bounds) {
+    setState(() {
+      _isShowingRoute = true;
+      _isSearchActive = false;
+      _polylines.add(Polyline(polylineId: const PolylineId('route'), color: const Color(0xFF4A6FA5), points: points, width: 5));
+      _markers.add(Marker(markerId: const MarkerId('start'), position: points.first, infoWindow: const InfoWindow(title: "Start")));
+      _markers.add(Marker(markerId: const MarkerId('end'), position: points.last, infoWindow: const InfoWindow(title: "Destination")));
+    });
+    _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+  }
+  
+  void _clearRoute({bool resetCamera = true}) {
+    setState(() {
+      _polylines.clear();
+      _markers.clear();
+      _isShowingRoute = false;
+      _routeInfo = {};
+    });
+    if (resetCamera) {
+      _getCurrentLocationAndMarker();
+    }
+  }
+
   void _showAddInsightSheet() {
     final TextEditingController insightController = TextEditingController();
     final TextEditingController routeController = TextEditingController();
@@ -174,20 +309,8 @@ class _DashboardState extends State<Dashboard> {
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Kerropi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        'Posting publicly across ZAPAC',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
+                      Text('Kerropi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Posting publicly across ZAPAC', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -196,10 +319,7 @@ class _DashboardState extends State<Dashboard> {
               TextField(
                 controller: insightController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Share an insight to the community....',
-                  border: InputBorder.none,
-                ),
+                decoration: const InputDecoration(hintText: 'Share an insight to the community....', border: InputBorder.none),
                 maxLines: 4,
               ),
               const SizedBox(height: 12),
@@ -218,8 +338,7 @@ class _DashboardState extends State<Dashboard> {
                   onPressed: () {
                     if (insightController.text.trim().isNotEmpty && routeController.text.trim().isNotEmpty) {
                       setState(() {
-                        _chatMessages.insert(
-                          0,
+                        _chatMessages.insert(0,
                           ChatMessage(
                             sender: 'Kerropi',
                             message: '“${insightController.text.trim()}”',
@@ -235,9 +354,7 @@ class _DashboardState extends State<Dashboard> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6CA89A),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text('OK'),
@@ -251,267 +368,12 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-
-  Future<void> _getCurrentLocationAndMarker() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-
-      setState(() {
-        _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('current_location'),
-            position: currentLatLng,
-            infoWindow: const InfoWindow(title: 'Your Location'),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          ),
-        );
-      });
-
-      _mapController.animateCamera(
-        CameraUpdate.newLatLng(currentLatLng),
-      );
-    } catch (e) {
-      print('Error getting location: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not get current location.')),
-        );
-      }
-    }
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-  }
-
-  void _toggleLike(int index) {
-    setState(() {
-      final message = _chatMessages[index];
-      message.isLiked = !message.isLiked;
-      message.likes += message.isLiked ? 1 : -1;
-      if (message.isLiked && message.isDisliked) {
-        message.isDisliked = false;
-        message.dislikes -= 1;
-      }
-    });
-  }
-
-  void _toggleDislike(int index) {
-    setState(() {
-      final message = _chatMessages[index];
-      message.isDisliked = !message.isDisliked;
-      message.dislikes += message.isDisliked ? 1 : -1;
-      if (message.isDisliked && message.isLiked) {
-        message.isLiked = false;
-        message.likes -= 1;
-      }
-    });
-  }
-
-  // MODIFIED: This is the new custom widget for each insight card to match Property 1=Default.png
-  Widget _buildInsightCard(ChatMessage message, int index) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundImage: NetworkImage(message.imageUrl),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          message.sender,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        if (message.isMostHelpful)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6CA89A).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              '💡 Most Helpful',
-                              style: TextStyle(
-                                color: Color(0xFF6CA89A),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTapDown: (details) async {
-                            final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-                            final List<PopupMenuEntry<String>> menuItems = [
-                              const PopupMenuItem(
-                                value: 'report',
-                                child: Text('Report'),
-                              ),
-                            ];
-                            // Only show delete if the comment is by the user
-                            if (message.sender == 'You') {
-                              menuItems.add(
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Delete'),
-                                ),
-                              );
-                            }
-                            final result = await showMenu<String>(
-                              context: context,
-                              position: RelativeRect.fromRect(
-                                details.globalPosition & const Size(40, 40),
-                                Offset.zero & overlay.size,
-                              ),
-                              items: menuItems,
-                            );
-                            if (result == 'report') {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Reported.')),
-                              );
-                            } else if (result == 'delete') {
-                              // Confirm before deleting
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Delete Comment'),
-                                  content: const Text('Are you sure you want to delete this comment?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                setState(() {
-                                  _chatMessages.removeAt(index);
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Comment deleted.')),
-                                );
-                              }
-                            }
-                          },
-                          child: const Icon(Icons.more_horiz, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      message.message,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Route: ${message.route}  |  ${message.timeAgo}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.only(left: 61), // 25 (avatar radius) + 12 (spacing) + a bit for balance
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () => _toggleLike(index),
-                  child: Row(
-                    children: [
-                      Icon(
-                        message.isLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-                        color: message.isLiked ? Colors.blue : Colors.grey,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(message.likes.toString(), style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 24),
-                InkWell(
-                  onTap: () => _toggleDislike(index),
-                  child: Row(
-                    children: [
-                      Icon(
-                        message.isDisliked ? Icons.thumb_down : Icons.thumb_down_alt_outlined,
-                        color: message.isDisliked ? Colors.red : Colors.grey,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(message.dislikes.toString(), style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  // NEW: Widget for building the filter chips
-  Widget _buildFilterChip(String label) {
-    final bool isSelected = _selectedFilter == label;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _selectedFilter = label;
-          });
-        }
-      },
-      backgroundColor: Colors.white,
-      selectedColor: const Color(0xFF6CA89A),
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.black54,
-        fontWeight: FontWeight.w500,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFF6CA89A)),
-      ),
-      showCheckmark: false,
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // MODIFIED: FloatingActionButton logic updated for the new UI
-      floatingActionButton: _isSheetFullyExpanded
+      floatingActionButton: _isSheetFullyExpanded && !_isSearchActive
           ? FloatingActionButton(
-              onPressed: _showAddInsightSheet, // Use the new bottom sheet
+              onPressed: _showAddInsightSheet,
               backgroundColor: const Color(0xFF6CA89A),
               heroTag: 'addInsightBtn',
               child: const Icon(Icons.add, color: Colors.white, size: 30),
@@ -523,224 +385,233 @@ class _DashboardState extends State<Dashboard> {
               child: const Icon(Icons.my_location, color: Colors.white),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
       bottomNavigationBar: const BottomNavBar(),
-
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned.fill(
-              child: GoogleMap(
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _initialCameraPosition,
-                  zoom: 14.0,
-                ),
-                markers: _markers,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: false,
-              ),
-            ),
-
-            // MODIFIED: The entire DraggableScrollableSheet is rebuilt for the new UI
-            DraggableScrollableSheet(
-              controller: _sheetController,
-              initialChildSize: 0.35, // Adjusted for new header
-              minChildSize: 0.25, // Adjusted for new header
-              maxChildSize: 0.85,
-              builder: (context, scrollController) {
-                return Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white, // Changed background to white
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // NEW: Header section matching 'Property 1=Default.png'
-                      Container(
-                        padding: const EdgeInsets.only(top: 8, bottom: 12),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF4BE6C), // Updated to your requested yellow
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30),
-                            topRight: Radius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 4,
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              RichText(
-                                text: const TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                    fontFamily: 'Roboto', // Ensure font consistency
-                                  ),
-                                  children: [
-                                    TextSpan(text: 'Taga '),
-                                    TextSpan(
-                                      text: 'ZAPAC',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF4A6FA5),
-                                      ),
-                                    ),
-                                    TextSpan(text: ' says...'),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      // NEW: Filter Chips section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildFilterChip('All'),
-                            _buildFilterChip('Warning'),
-                            _buildFilterChip('Shortcuts'),
-                            _buildFilterChip('Fare Tips'),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: Colors.black12),
-                      // List of chat messages
-                      Expanded(
-                        child: ListView.separated(
-                          controller: scrollController,
-                          itemCount: _chatMessages.length,
-                          itemBuilder: (context, index) {
-                            return _buildInsightCard(_chatMessages[index], index);
-                          },
-                          separatorBuilder: (context, index) => const Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: Colors.black12,
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+            GoogleMap(
+              onMapCreated: _onMapCreated,
+              initialCameraPosition: CameraPosition(target: _initialCameraPosition, zoom: 14.0),
+              markers: _markers,
+              polylines: _polylines,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              onTap: (_) {
+                if (_isSearchActive) {
+                  setState(() {
+                      _isSearchActive = false;
+                      _searchController.clear();
+                      _predictions = [];
+                  });
+                }
               },
             ),
+            if (_isSearchActive)
+              _buildSearchView()
+            else
+              _buildDefaultView(),
+          ],
+        ),
+      ),
+    );
+  }
 
-            const Positioned(
-              top: 12,
-              left: 19,
-              right: 19,
-              child: SearchBar(),
+  Widget _buildDefaultView() {
+    return Stack(
+      children: [
+        if (!_isShowingRoute)
+          DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: 0.35,
+            minChildSize: 0.25,
+            maxChildSize: 0.85,
+            builder: (context, scrollController) => _buildInsightsSheet(scrollController),
+          ),
+        if (_isShowingRoute)
+           _buildRouteDetailsSheet(),
+        Positioned(
+          top: 12,
+          left: 19,
+          right: 19,
+          child: SearchBar(
+            onTap: () => setState(() => _isSearchActive = true),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchView() {
+    return Container(
+      color: Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() {
+                      _isSearchActive = false;
+                      _searchController.clear();
+                      _predictions = [];
+                    }),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      onChanged: _getPredictions,
+                      decoration: const InputDecoration.collapsed(hintText: "Where to?"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            if (favoriteRoutes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Wrap(
+                  spacing: 8.0,
+                  children: favoriteRoutes.map((route) => ElevatedButton(
+                    onPressed: () => _showRoute({'route': route}),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6CA89A), foregroundColor: Colors.white),
+                    child: Text(route.routeName),
+                  )).toList(),
+                ),
+              ),
+            if (favoriteRoutes.isNotEmpty) const Divider(height: 1),
+            Expanded(
+              child: _searchController.text.isEmpty
+                ? _buildList(_recentLocations, Icons.history)
+                : _buildList(_predictions, Icons.location_on_outlined),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-
-// --- Search Bar Widget (Unchanged) ---
-class SearchBar extends StatefulWidget {
-  final VoidCallback? onProfileTap;
-  const SearchBar({super.key, this.onProfileTap});
-  @override
-  State<SearchBar> createState() => _SearchBarState();
-}
-class _SearchBarState extends State<SearchBar> {
-  final TextEditingController _searchController = TextEditingController();
-  @override
-  void dispose(){
-    _searchController.dispose();
-    super.dispose();
+  Widget _buildList(List<dynamic> items, IconData icon) {
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          leading: Icon(icon, color: Colors.grey),
+          title: Text(items[index]['description']),
+          onTap: () => _showRoute({'place': items[index]}),
+        );
+      },
+    );
   }
-  @override
-  Widget build(BuildContext context) {
+
+  Widget _buildRouteDetailsSheet() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Card(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Route to Destination", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(children: [const Text("Distance", style: TextStyle(color: Colors.grey)), Text(_routeInfo['distance'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
+                  Column(children: [const Text("Duration", style: TextStyle(color: Colors.grey)), Text(_routeInfo['duration'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _clearRoute,
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE97C7C), foregroundColor: Colors.white),
+                child: const Text("Clear Route"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInsightsSheet(ScrollController scrollController) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: ShapeDecoration(
-        color: const Color(0xFFD9E0EA),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
-        shadows: [
-          BoxShadow(
-            color: const Color(0xFF4A6FA5).withOpacity(0.4),
-            blurRadius: 6.8,
-            offset: const Offset(2, 5),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -5))],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.only(top: 8, bottom: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF4BE6C),
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+            ),
+            child: Center(
+              child: Column(
+                children: [
+                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 8), decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
+                  const Text("Taga ZAPAC says...", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              controller: scrollController,
+              itemCount: _chatMessages.length,
+              itemBuilder: (context, index) => _buildInsightCard(_chatMessages[index]),
+              separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+            ),
           ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildInsightCard(ChatMessage message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          CircleAvatar(radius: 25, backgroundImage: NetworkImage(message.imageUrl)),
+          const SizedBox(width: 12),
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.search, color: Color(0xFF6CA89A)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Where to?',
-                      hintStyle: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
+                Row(
+                  children: [
+                    Text(message.sender, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    if (message.isMostHelpful)
+                      Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFF6CA89A).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('💡 Most Helpful', style: TextStyle(color: Color(0xFF6CA89A), fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    onSubmitted: (value) => print('Search query submitted: $value'),
-                  ),
+                    const Spacer(),
+                    const Icon(Icons.more_horiz, color: Colors.grey),
+                  ],
                 ),
+                const SizedBox(height: 4),
+                Text(message.message, style: const TextStyle(fontSize: 14)),
+                const SizedBox(height: 8),
+                Text('Route: ${message.route}  |  ${message.timeAgo}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
               ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              widget.onProfileTap?.call();
-              print('Profile icon tapped!');
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
-            },
-            child: Container(
-              width: 34,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: Color(0xFF6CA89A),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.account_circle, color: Colors.white),
             ),
           ),
         ],
@@ -749,30 +620,50 @@ class _SearchBarState extends State<SearchBar> {
   }
 }
 
-// --- Bottom Navigation Bar Widget (Unchanged) ---
-class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({super.key});
-  @override
-  State<BottomNavBar> createState() => _BottomNavBarState();
-}
-class _BottomNavBarState extends State<BottomNavBar> {
-  int _selectedIndex = 0;
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      print('Selected index: $_selectedIndex');
-    });
-    // Navigate to the FavoriteRoutesPage if the bookmark icon is tapped
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
-      );
-    }
-  }
+class SearchBar extends StatelessWidget {
+  final VoidCallback? onTap;
+  const SearchBar({super.key, this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: AbsorbPointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: ShapeDecoration(
+            color: const Color(0xFFD9E0EA),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
+            shadows: [BoxShadow(color: const Color(0xFF4A6FA5).withOpacity(0.4), blurRadius: 6.8, offset: const Offset(2, 5))],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.search, color: Color(0xFF6CA89A)),
+              const SizedBox(width: 8),
+              const Expanded(child: Text('Where to?', style: TextStyle(color: Colors.black54, fontSize: 16))),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage())),
+                child: Container(
+                  width: 34,
+                  height: 32,
+                  decoration: const BoxDecoration(color: Color(0xFF6CA89A), shape: BoxShape.circle),
+                  child: const Icon(Icons.account_circle, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BottomNavBar extends StatelessWidget {
+  const BottomNavBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+     return Container(
       height: 88,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -783,43 +674,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          GestureDetector(
-            onTap: () {
-              // Only navigate if not already on dashboard
-              if (_selectedIndex != 0) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Dashboard()),
-                );
-              }
-              _onItemTapped(0);
-            },
-            child: Icon(
-              Icons.home,
-              size: 30,
-              color: _selectedIndex == 0 ? Colors.tealAccent[100] : Colors.white,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _onItemTapped(1),
-            child: Icon(
-              Icons.bookmark,
-              size: 30,
-              color: _selectedIndex == 1 ? Colors.tealAccent[100] : Colors.white,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _onItemTapped(2),
-            child: Icon(
-              Icons.menu,
-              size: 30,
-              color: _selectedIndex == 2 ? Colors.tealAccent[100] : Colors.white,
-            ),
-          ),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.home, size: 30, color: Colors.white)),
+          IconButton(onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()));
+          }, icon: const Icon(Icons.bookmark, size: 30, color: Colors.white)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.menu, size: 30, color: Colors.white)),
         ],
       ),
     );
   }
 }
-
-
