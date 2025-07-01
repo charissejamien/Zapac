@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'profile_page.dart';
+import 'favorite_routes_page.dart';
 
 // --- Dummy Data for Chat Messages ---
 class ChatMessage {
@@ -97,7 +98,7 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void initState() {
->>>>>>> 0be036ff8d173c1d59b211b073026a5356f4f49c
+
     super.initState();
     _addMarker(_initialCameraPosition, 'cebu_city_marker', 'Cebu City');
     _getCurrentLocationAndMarker();
@@ -761,6 +762,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
       _selectedIndex = index;
       print('Selected index: $_selectedIndex');
     });
+    // Navigate to the FavoriteRoutesPage if the bookmark icon is tapped
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
+      );
+    }
   }
   @override
   Widget build(BuildContext context) {
@@ -810,7 +818,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
           ),
         ],
       ),
->>>>>>> 0be036ff8d173c1d59b211b073026a5356f4f49c
     );
   }
 }

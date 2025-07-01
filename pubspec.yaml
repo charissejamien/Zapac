@@ -9,15 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-<<<<<<< HEAD
-  google_maps_flutter: ^2.12.2
-  geolocator: ^12.0.0
-=======
   geolocator: ^14.0.1
   google_maps_flutter: ^2.12.2
   permission_handler: ^12.0.0+1
-
->>>>>>> 0be036ff8d173c1d59b211b073026a5356f4f49c
+  http: ^1.2.2
+  flutter_polyline_points: ^2.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
