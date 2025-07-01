@@ -14,7 +14,7 @@ class AddNewRoutePage extends StatefulWidget {
 }
 
 class _AddNewRoutePageState extends State<AddNewRoutePage> {
-  final String apiKey = "YOUR_API_KEY"; // IMPORTANT: Replace with your API key
+  final String apiKey = "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc"; // IMPORTANT: Replace with your API key
 
   final TextEditingController _routeNameController = TextEditingController();
   final TextEditingController _startLocationController = TextEditingController();

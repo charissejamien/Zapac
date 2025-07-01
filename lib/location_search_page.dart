@@ -23,8 +23,17 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
       return;
     }
 
+    // --- MODIFICATION START ---
+    // Coordinates for Cebu City and a 30km radius
+    const location = "10.3157,123.8854";
+    const radius = "30000"; // 30 kilometers in meters
+    const strictBounds = "true";
+    const components = "country:ph"; // Restrict to the Philippines
+
     String url =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=${widget.apiKey}';
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=${widget.apiKey}&location=$location&radius=$radius&strictbounds=$strictBounds&components=$components';
+    // --- MODIFICATION END ---
+
 
     var response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
@@ -49,7 +58,6 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Enter a location',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
