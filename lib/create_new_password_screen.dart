@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'login_body.dart';
+import 'auth_screen.dart'; // MODIFIED: Import the full AuthScreen
 
 class CreateNewPasswordScreen extends StatefulWidget {
+  const CreateNewPasswordScreen({super.key});
+
   @override
   _CreateNewPasswordScreenState createState() => _CreateNewPasswordScreenState();
 }
@@ -141,11 +143,12 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
             SizedBox(height: 25),
             Center(
               child: ElevatedButton(
+                // MODIFIED: This is the corrected navigation logic
                 onPressed: () {
-                  // Replace current screen with LoginScreen
-                  Navigator.pushReplacement(
+                  Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => LoginBody()),
+                    MaterialPageRoute(builder: (context) => const AuthScreen()),
+                    (Route<dynamic> route) => false,
                   );
                 },
                 style: ElevatedButton.styleFrom(

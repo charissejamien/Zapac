@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SignUpBody extends StatefulWidget {
+  const SignUpBody({super.key});
+
   @override
   _SignUpBodyState createState() => _SignUpBodyState();
 }
@@ -75,19 +77,19 @@ class _SignUpBodyState extends State<SignUpBody> {
             onPressed: () {
               // Add your sign-up logic here
             },
-            child: Text(
-              "Sign Up",
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400),
-            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF6CA89A),
               padding: EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+            ),
+            child: Text(
+              "Sign Up",
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400),
             ),
           ),
           SizedBox(height: 20),
