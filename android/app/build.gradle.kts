@@ -26,8 +26,8 @@ android {
         // https://developers.google.com/maps/flutter-package/config#android
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
