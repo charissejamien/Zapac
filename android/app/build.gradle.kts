@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.zapac"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -26,8 +26,8 @@ android {
         // https://developers.google.com/maps/flutter-package/config#android
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
