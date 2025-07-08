@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:zapac/dashboard.dart';
 import 'reset_password_screen.dart';
 
-
 class LoginBody extends StatefulWidget {
   const LoginBody({super.key});
 
@@ -13,6 +12,7 @@ class LoginBody extends StatefulWidget {
 
 class _LoginBodyState extends State<LoginBody> {
   bool _obscurePassword = true;
+  String _errorMessage = '';
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -28,9 +28,10 @@ class _LoginBodyState extends State<LoginBody> {
             child: Text(
               "Welcome Back!",
               style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF6CA89A)),
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF6CA89A),
+              ),
             ),
           ),
           SizedBox(height: 30),
@@ -67,9 +68,9 @@ class _LoginBodyState extends State<LoginBody> {
                 borderSide: BorderSide.none,
               ),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword
-                    ? Icons.visibility_off
-                    : Icons.visibility),
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                ),
                 onPressed: () {
                   setState(() {
                     _obscurePassword = !_obscurePassword;
@@ -78,13 +79,50 @@ class _LoginBodyState extends State<LoginBody> {
               ),
             ),
           ),
-          SizedBox(height: 50),
+
+          Container(
+            height: 30,
+            alignment: Alignment.center,
+            child: Text(
+              _errorMessage,
+              style: TextStyle(color: Colors.red, fontSize: 14),
+            ),
+          ),
+          SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Dashboard()),
-                      );
+              final email = emailController.text;
+              final password = passwordController.text;
+
+              setState(() {
+                _errorMessage = '';
+              });
+
+              if (email == "zoie@gmail.com" && password == "batman") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Dashboard()),
+                );
+              } else if (email == "princess@gmail.com" &&
+                  password == "superman") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Dashboard()),
+                );
+              } else {
+                if (email != "zoie@gmail.com" &&
+                    email != "princess@gmail.com") {
+                  setState(() {
+                    _errorMessage = "Incorrect email.";
+                  });
+                } else if ((email == "zoie@gmail.com" &&
+                        password != "batman") ||
+                    (email == "princess@gmail.com" && password != "superman")) {
+                  setState(() {
+                    _errorMessage = "Incorrect password.";
+                  });
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF6CA89A),
@@ -96,9 +134,10 @@ class _LoginBodyState extends State<LoginBody> {
             child: Text(
               "Login",
               style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400),
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
           SizedBox(height: 30),
@@ -112,12 +151,14 @@ class _LoginBodyState extends State<LoginBody> {
                     text: " Reset password",
                     style: TextStyle(color: Color(0xFFEA4335)),
                     recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ResetPasswordScreen()),
-                      );
-                    },
+                      ..onTap = () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ResetPasswordScreen(),
+                          ),
+                        );
+                      },
                   ),
                 ],
               ),
@@ -129,9 +170,16 @@ class _LoginBodyState extends State<LoginBody> {
             child: Row(
               children: [
                 Expanded(
-                  child: Divider(color: Colors.grey, thickness: 1, endIndent: 10),
+                  child: Divider(
+                    color: Colors.grey,
+                    thickness: 1,
+                    endIndent: 10,
+                  ),
                 ),
-                Text("or sign in with", style: TextStyle(color: Color(0xFF2F2D2A))),
+                Text(
+                  "or sign in with",
+                  style: TextStyle(color: Color(0xFF2F2D2A)),
+                ),
                 Expanded(
                   child: Divider(color: Colors.grey, thickness: 1, indent: 10),
                 ),
@@ -145,7 +193,10 @@ class _LoginBodyState extends State<LoginBody> {
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: Icon(Icons.g_mobiledata, color: Colors.white),
-                label: Text("Google", style: TextStyle(fontSize: 14, color: Colors.white)),
+                label: Text(
+                  "Google",
+                  style: TextStyle(fontSize: 14, color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2E2E2E),
                   padding: EdgeInsets.symmetric(horizontal: 40),
@@ -154,7 +205,10 @@ class _LoginBodyState extends State<LoginBody> {
               ElevatedButton.icon(
                 onPressed: () {},
                 icon: Icon(Icons.facebook, color: Colors.blue),
-                label: Text("Facebook", style: TextStyle(fontSize: 14, color: Colors.black)),
+                label: Text(
+                  "Facebook",
+                  style: TextStyle(fontSize: 14, color: Colors.black),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 40),

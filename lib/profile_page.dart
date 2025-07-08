@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart'; // Remove this line
 import 'bottom_navbar.dart'; // Add this line to directly import BottomNavBar
+import 'auth_screen.dart'; // Import your login screen file
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -323,7 +324,15 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: TextButton(
                       onPressed: () {
                         // TODO: call your delete-account API, then:
-                        Navigator.of(ctx).pop();
+                        // Navigator.of(ctx).pop(); // Remove this line
+                        Navigator.pushAndRemoveUntil(
+                          // Add this line
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AuthScreen(),
+                          ), // Replace LoginScreen() with your actual login page widget
+                          (Route<dynamic> route) => false,
+                        );
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: coralRed,

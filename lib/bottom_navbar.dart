@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Assuming dashboard.dart is in the same lib folder
+import 'dashboard.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int selectedIndex;

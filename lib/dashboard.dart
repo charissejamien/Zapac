@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'profile_page.dart'; // Assuming profile_page.dart exists
-import 'commenting_section.dart'; // Import the new commenting section
-import 'bottom_navbar.dart'; // Import the new bottom nav bar
+import 'profile_page.dart';
+import 'commenting_section.dart';
+import 'bottom_navbar.dart';
+import 'AuthManager.dart';
+import 'dart:async';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -26,6 +28,8 @@ class _DashboardState extends State<Dashboard> {
   bool _isSheetFullyExpanded = false;
   int _selectedIndex = 0; // For BottomNavBar
 
+  StreamSubscription? _otherUserLocationSubscription; // For WebSocket updates
+
   @override
   void initState() {
     super.initState();
@@ -39,24 +43,72 @@ class _DashboardState extends State<Dashboard> {
         setState(() => _isSheetFullyExpanded = false);
       }
     });
+
+    // Listen to other user's location stream from AuthManager
+    _otherUserLocationSubscription = AuthManager().otherUserLocationStream
+        .listen((location) {
+          if (mounted) {
+            // Ensure widget is still mounted before setState
+            _updateOtherUserMarker(location);
+          }
+        });
+
+    // Initialize other user's marker if they exist on start
+    if (AuthManager().otherUser != null &&
+        AuthManager().otherUser!.currentLocation != null) {
+      _addMarker(
+        AuthManager().otherUser!.currentLocation!,
+        'other_user_location',
+        AuthManager().otherUser!.fullName,
+      );
+    }
   }
 
   @override
   void dispose() {
     _sheetController.dispose();
+    _otherUserLocationSubscription?.cancel(); // Cancel subscription
     super.dispose();
   }
 
-  void _addMarker(LatLng position, String markerId, String title) {
+  void _addMarker(
+    LatLng position,
+    String markerId,
+    String title, {
+    BitmapDescriptor? icon,
+  }) {
     setState(() {
       _markers.add(
         Marker(
           markerId: MarkerId(markerId),
           position: position,
           infoWindow: InfoWindow(title: title),
+          icon: icon ?? BitmapDescriptor.defaultMarker,
         ),
       );
     });
+  }
+
+  void _updateOtherUserMarker(LatLng newLocation) {
+    setState(() {
+      _markers.removeWhere(
+        (marker) => marker.markerId.value == 'other_user_location',
+      );
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('other_user_location'),
+          position: newLocation,
+          infoWindow: InfoWindow(
+            title: AuthManager().otherUser?.fullName ?? 'Other User',
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange, // Different color for other user
+          ),
+        ),
+      );
+    });
+    // Optionally move camera to track the other user
+    // _mapController.animateCamera(CameraUpdate.newLatLng(newLocation));
   }
 
   Future<void> _getCurrentLocationAndMarker() async {
@@ -83,6 +135,9 @@ class _DashboardState extends State<Dashboard> {
       });
 
       _mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+      AuthManager().sendLocation(
+        currentLatLng,
+      ); // Send current user's location via WebSocket
     } catch (e) {
       print('Error getting location: $e');
       if (mounted) {
