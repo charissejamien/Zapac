@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'profile_page.dart'; // Assuming profile_page.dart exists
-import 'commenting_section.dart'; // Import the new commenting section
-import 'bottom_navbar.dart'; // Import the new bottom nav bar
+import 'profile_page.dart';
+import 'commenting_section.dart';
+import 'bottom_navbar.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
