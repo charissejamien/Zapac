@@ -9,6 +9,11 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'commenting_section.dart';
+import 'bottom_navbar.dart';
+import 'AuthManager.dart';
+import 'dart:async';
+
 // --- Dummy Data for Chat Messages ---
 class ChatMessage {
   final String sender;
@@ -83,7 +88,6 @@ List<ChatMessage> _chatMessages = [
   ),
 ];
 
-
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
@@ -101,6 +105,8 @@ class _DashboardState extends State<Dashboard> {
 
   bool _isSheetFullyExpanded = false;
   String _selectedFilter = 'All';
+  int _selectedIndex = 0; // For BottomNavBar
+  StreamSubscription? _otherUserLocationSubscription; // For WebSocket updates
 
   // --- State for Search and Routing ---
   bool _isSearchActive = false;
@@ -111,513 +117,459 @@ class _DashboardState extends State<Dashboard> {
   Map<String, String> _routeInfo = {};
 
   final List<Map<String, dynamic>> _recentLocations = [
-      {'description': 'House ni Gorgeous', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-      {'description': 'House sa Gwapa', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-      {'description': 'House ni Pretty', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-      {'description': 'SM J Mall', 'place_id': 'ChIJb_MjLwtwqTMReyS2tJz13ic'},
-      {'description': 'House ni Lim', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-      {'description': 'iAcademy Cebu', 'place_id': 'ChIJ155n0wtwqTMRsP82-fG436Y'},
-      {'description': 'Ayala Malls Central Bloc', 'place_id': 'ChIJ-c52xgtwqTMR_F098xGvXD4'},
+    {'description': 'House ni Gorgeous', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+    {'description': 'House sa Gwapa', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+    {'description': 'House ni Pretty', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+    {'description': 'SM J Mall', 'place_id': 'ChIJb_MjLwtwqTMReyS2tJz13ic'},
+    {'description': 'House ni Lim', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
+    {'description': 'iAcademy Cebu', 'place_id': 'ChIJ155n0wtwqTMRsP82-fG436Y'},
+    {'description': 'Ayala Malls Central Bloc', 'place_id': 'ChIJ-c52xgtwqTMR_F098xGvXD4'},
   ];
+}
 
-  @override
-  void initState() {
-    super.initState();
-    _addMarker(_initialCameraPosition, 'cebu_city_marker', 'Cebu City');
-    _getCurrentLocationAndMarker();
 
-    _sheetController.addListener(() {
-      if (_sheetController.size >= 0.85 && !_isSheetFullyExpanded) {
-        setState(() => _isSheetFullyExpanded = true);
-      } else if (_sheetController.size < 0.85 && _isSheetFullyExpanded) {
-        setState(() => _isSheetFullyExpanded = false);
-      }
-    });
+@override
+void initState() {
+  super.initState();
+  _addMarker(_initialCameraPosition, 'cebu_city_marker', 'Cebu City');
+  _getCurrentLocationAndMarker();
+
+  _sheetController.addListener(() {
+    if (_sheetController.size >= 0.85 && !_isSheetFullyExpanded) {
+      setState(() => _isSheetFullyExpanded = true);
+    } else if (_sheetController.size < 0.85 && _isSheetFullyExpanded) {
+      setState(() => _isSheetFullyExpanded = false);
+    }
+  });
+
+  // Listen to other user's location stream from AuthManager
+  _otherUserLocationSubscription = AuthManager().otherUserLocationStream.listen((location) {
+    if (mounted) {
+      _updateOtherUserMarker(location);
+    }
+  });
+
+  // Initialize other user's marker if they exist on start
+  if (AuthManager().otherUser != null && AuthManager().otherUser!.currentLocation != null) {
+    _addMarker(
+      AuthManager().otherUser!.currentLocation!,
+      'other_user_location',
+      AuthManager().otherUser!.fullName,
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+    );
   }
+}
 
-  void _addMarker(LatLng position, String markerId, String title) {
+@override
+void dispose() {
+  _mapController.dispose();
+  _sheetController.dispose();
+  _commentController.dispose();
+  _searchController.dispose();
+  _otherUserLocationSubscription?.cancel();
+  super.dispose();
+}
+
+void _onMapCreated(GoogleMapController controller) {
+  _mapController = controller;
+}
+
+Future<void> _getCurrentLocationAndMarker() async {
+  try {
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    LatLng currentLatLng = LatLng(position.latitude, position.longitude);
+
     setState(() {
+      _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
       _markers.add(
         Marker(
-          markerId: MarkerId(markerId),
-          position: position,
-          infoWindow: InfoWindow(title: title),
+          markerId: const MarkerId('current_location'),
+          position: currentLatLng,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
     });
-  }
 
-  @override
-  void dispose() {
-    _mapController.dispose();
-    _sheetController.dispose();
-    _commentController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-  }
-
-  Future<void> _getCurrentLocationAndMarker() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+    if (mounted) {
+      _mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+    }
+  } catch (e) {
+    print('Error getting location: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not get current location.')),
       );
-      LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-
-      setState(() {
-        _markers.removeWhere((marker) => marker.markerId.value == 'current_location');
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('current_location'),
-            position: currentLatLng,
-            infoWindow: const InfoWindow(title: 'Your Location'),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          ),
-        );
-      });
-      if(mounted) {
-        _mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
-      }
-    } catch (e) {
-      print('Error getting location: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not get current location.')),
-        );
-      }
     }
   }
+}
 
-  Future<void> _getPredictions(String input) async {
-    if (input.isEmpty) {
-      setState(() => _predictions = []);
-      return;
-    }
-    const location = "10.3157,123.8854";
-    const radius = "30000";
-    const components = "country:ph";
-    String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&location=$location&radius=$radius&strictbounds=true&components=$components';
-    
-    try {
-      var response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200 && mounted) {
-        setState(() => _predictions = json.decode(response.body)['predictions']);
-      }
-    } catch(e) {
-      print(e);
-    }
-  }
-
-  Future<void> _showRoute(dynamic destination) async {
-    _clearRoute(resetCamera: false);
-
-    if (destination.containsKey('route')) {
-      final FavoriteRoute route = destination['route'];
-      _updateMapWithRoute(route.polylinePoints, route.bounds);
-      setState(() => _routeInfo = {'distance': route.distance, 'duration': route.duration});
-      return;
-    }
-
-    if (destination.containsKey('place')) {
-      final place = destination['place'];
-      final String placeId = place['place_id'];
-      
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      LatLng startPosition = LatLng(position.latitude, position.longitude);
-
-      String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${startPosition.latitude},${startPosition.longitude}&destination=place_id:$placeId&key=$apiKey';
-      
-      try {
-        var response = await http.get(Uri.parse(url));
-        if (response.statusCode == 200) {
-          var decoded = json.decode(response.body);
-          final routeData = decoded['routes'][0];
-          
-          List<PointLatLng> polylineCoordinates = PolylinePoints().decodePolyline(routeData['overview_polyline']['points']);
-          List<LatLng> latLngList = polylineCoordinates.map((point) => LatLng(point.latitude, point.longitude)).toList();
-          
-          final bounds = LatLngBounds(
-              southwest: LatLng(routeData['bounds']['southwest']['lat'], routeData['bounds']['southwest']['lng']),
-              northeast: LatLng(routeData['bounds']['northeast']['lat'], routeData['bounds']['northeast']['lng']),
-          );
-          
-          _updateMapWithRoute(latLngList, bounds);
-          setState(() => _routeInfo = {'distance': routeData['legs'][0]['distance']['text'], 'duration': routeData['legs'][0]['duration']['text']});
-        }
-      } catch(e) {
-        print(e);
-      }
-    }
-  }
-
-  void _updateMapWithRoute(List<LatLng> points, LatLngBounds bounds) {
-    setState(() {
-      _isShowingRoute = true;
-      _isSearchActive = false;
-      _polylines.add(Polyline(polylineId: const PolylineId('route'), color: const Color(0xFF4A6FA5), points: points, width: 5));
-      _markers.add(Marker(markerId: const MarkerId('start'), position: points.first, infoWindow: const InfoWindow(title: "Start")));
-      _markers.add(Marker(markerId: const MarkerId('end'), position: points.last, infoWindow: const InfoWindow(title: "Destination")));
-    });
-    _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
-  }
-  
-  void _clearRoute({bool resetCamera = true}) {
-    setState(() {
-      _polylines.clear();
-      _markers.clear();
-      _isShowingRoute = false;
-      _routeInfo = {};
-    });
-    if (resetCamera) {
-      _getCurrentLocationAndMarker();
-    }
-  }
-
-  void _showAddInsightSheet() {
-    final TextEditingController insightController = TextEditingController();
-    final TextEditingController routeController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+void _updateOtherUserMarker(LatLng newLocation) {
+  setState(() {
+    _markers.removeWhere(
+      (marker) => marker.markerId.value == 'other_user_location',
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('other_user_location'),
+        position: newLocation,
+        infoWindow: InfoWindow(
+          title: AuthManager().otherUser?.fullName ?? 'Other User',
+        ),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueOrange,
+        ),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20,
-            right: 20,
-            top: 20,
+    );
+  });
+
+  // Optional: Move camera to follow other user
+  // _mapController.animateCamera(CameraUpdate.newLatLng(newLocation));
+}
+
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    floatingActionButton: _isSheetFullyExpanded && !_isSearchActive
+        ? FloatingActionButton(
+            onPressed: _showAddInsightSheet,
+            backgroundColor: const Color(0xFF6CA89A),
+            heroTag: 'addInsightBtn',
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          )
+        : FloatingActionButton(
+            onPressed: _getCurrentLocationAndMarker,
+            backgroundColor: const Color(0xFF6CA89A),
+            heroTag: 'myLocationBtn',
+            child: const Icon(Icons.my_location, color: Colors.white),
           ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
+    bottomNavigationBar: BottomNavBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+    ),
+
+    body: SafeArea(
+      child: Stack(
+        children: [
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: _initialCameraPosition,
+              zoom: 14.0,
+            ),
+            markers: _markers,
+            polylines: _polylines,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            onTap: (_) {
+              if (_isSearchActive) {
+                setState(() {
+                  _isSearchActive = false;
+                  _searchController.clear();
+                  _predictions = [];
+                });
+              }
+            },
+          ),
+          if (_isSearchActive)
+            _buildSearchView()
+          else
+            _buildDefaultView(),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildDefaultView() {
+  return Stack(
+    children: [
+      if (!_isShowingRoute)
+        DraggableScrollableSheet(
+          controller: _sheetController,
+          initialChildSize: 0.35,
+          minChildSize: 0.25,
+          maxChildSize: 0.85,
+          builder: (context, scrollController) =>
+              _buildInsightsSheet(scrollController),
+        ),
+      if (_isShowingRoute) _buildRouteDetailsSheet(),
+      Positioned(
+        top: 12,
+        left: 19,
+        right: 19,
+        child: SearchBar(
+          onTap: () => setState(() => _isSearchActive = true),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildSearchView() {
+  return Container(
+    color: Colors.white,
+    child: SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => setState(() {
+                    _isSearchActive = false;
+                    _searchController.clear();
+                    _predictions = [];
+                  }),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    onChanged: _getPredictions,
+                    decoration: const InputDecoration.collapsed(
+                      hintText: "Where to?",
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          if (favoriteRoutes.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Wrap(
+                spacing: 8.0,
+                children: favoriteRoutes
+                    .map(
+                      (route) => ElevatedButton(
+                        onPressed: () => _showRoute({'route': route}),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6CA89A),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(route.routeName),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          if (favoriteRoutes.isNotEmpty) const Divider(height: 1),
+          Expanded(
+            child: _searchController.text.isEmpty
+                ? _buildList(_recentLocations, Icons.history)
+                : _buildList(_predictions, Icons.location_on_outlined),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+Widget _buildList(List<dynamic> items, IconData icon) {
+  return ListView.builder(
+    itemCount: items.length,
+    itemBuilder: (context, index) {
+      return ListTile(
+        leading: Icon(icon, color: Colors.grey),
+        title: Text(items[index]['description']),
+        onTap: () => _showRoute({'place': items[index]}),
+      );
+    },
+  );
+}
+
+Widget _buildRouteDetailsSheet() {
+  return Positioned(
+    bottom: 0,
+    left: 0,
+    right: 0,
+    child: Card(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Route to Destination",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    const Text("Distance", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      _routeInfo['distance'] ?? '',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text("Duration", style: TextStyle(color: Colors.grey)),
+                    Text(
+                      _routeInfo['duration'] ?? '',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _clearRoute,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE97C7C),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Clear Route"),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildInsightsSheet(ScrollController scrollController) {
+  return Container(
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(30),
+        topRight: Radius.circular(30),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 10,
+          offset: Offset(0, -5),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.only(top: 8, bottom: 12),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF4BE6C),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Center(
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  "Taga ZAPAC says...",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            controller: scrollController,
+            itemCount: _chatMessages.length,
+            itemBuilder: (context, index) =>
+                _buildInsightCard(_chatMessages[index]),
+            separatorBuilder: (context, index) => const Divider(
+              height: 1,
+              indent: 16,
+              endIndent: 16,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildInsightCard(ChatMessage message) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 25,
+          backgroundImage: NetworkImage(message.imageUrl),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundImage: NetworkImage('https://cdn-icons-png.flaticon.com/512/100/100913.png'),
-                    backgroundColor: Colors.transparent,
+                  Text(
+                    message.sender,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Kerropi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text('Posting publicly across ZAPAC', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
-                  ),
+                  if (message.isMostHelpful)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6CA89A).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '💡 Most Helpful',
+                        style: TextStyle(
+                          color: Color(0xFF6CA89A),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  const Icon(Icons.more_horiz, color: Colors.grey),
                 ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: insightController,
-                autofocus: true,
-                decoration: const InputDecoration(hintText: 'Share an insight to the community....', border: InputBorder.none),
-                maxLines: 4,
+              const SizedBox(height: 4),
+              Text(
+                message.message,
+                style: const TextStyle(fontSize: 14),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: routeController,
-                decoration: const InputDecoration(
-                  hintText: 'What route are you on?',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
+              const SizedBox(height: 8),
+              Text(
+                'Route: ${message.route}  |  ${message.timeAgo}',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (insightController.text.trim().isNotEmpty && routeController.text.trim().isNotEmpty) {
-                      setState(() {
-                        _chatMessages.insert(0,
-                          ChatMessage(
-                            sender: 'Kerropi',
-                            message: '“${insightController.text.trim()}”',
-                            route: routeController.text.trim(),
-                            timeAgo: 'Just now',
-                            imageUrl: 'https://cdn-icons-png.flaticon.com/512/100/100913.png',
-                          ),
-                        );
-                      });
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6CA89A),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('OK'),
-                ),
-              ),
-              const SizedBox(height: 16),
             ],
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: _isSheetFullyExpanded && !_isSearchActive
-          ? FloatingActionButton(
-              onPressed: _showAddInsightSheet,
-              backgroundColor: const Color(0xFF6CA89A),
-              heroTag: 'addInsightBtn',
-              child: const Icon(Icons.add, color: Colors.white, size: 30),
-            )
-          : FloatingActionButton(
-              onPressed: _getCurrentLocationAndMarker,
-              backgroundColor: const Color(0xFF6CA89A),
-              heroTag: 'myLocationBtn',
-              child: const Icon(Icons.my_location, color: Colors.white),
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: const BottomNavBar(),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            GoogleMap(
-              onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(target: _initialCameraPosition, zoom: 14.0),
-              markers: _markers,
-              polylines: _polylines,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              onTap: (_) {
-                if (_isSearchActive) {
-                  setState(() {
-                      _isSearchActive = false;
-                      _searchController.clear();
-                      _predictions = [];
-                  });
-                }
-              },
-            ),
-            if (_isSearchActive)
-              _buildSearchView()
-            else
-              _buildDefaultView(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDefaultView() {
-    return Stack(
-      children: [
-        if (!_isShowingRoute)
-          DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: 0.35,
-            minChildSize: 0.25,
-            maxChildSize: 0.85,
-            builder: (context, scrollController) => _buildInsightsSheet(scrollController),
-          ),
-        if (_isShowingRoute)
-           _buildRouteDetailsSheet(),
-        Positioned(
-          top: 12,
-          left: 19,
-          right: 19,
-          child: SearchBar(
-            onTap: () => setState(() => _isSearchActive = true),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSearchView() {
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() {
-                      _isSearchActive = false;
-                      _searchController.clear();
-                      _predictions = [];
-                    }),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      onChanged: _getPredictions,
-                      decoration: const InputDecoration.collapsed(hintText: "Where to?"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            if (favoriteRoutes.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Wrap(
-                  spacing: 8.0,
-                  children: favoriteRoutes.map((route) => ElevatedButton(
-                    onPressed: () => _showRoute({'route': route}),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6CA89A), foregroundColor: Colors.white),
-                    child: Text(route.routeName),
-                  )).toList(),
-                ),
-              ),
-            if (favoriteRoutes.isNotEmpty) const Divider(height: 1),
-            Expanded(
-              child: _searchController.text.isEmpty
-                ? _buildList(_recentLocations, Icons.history)
-                : _buildList(_predictions, Icons.location_on_outlined),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildList(List<dynamic> items, IconData icon) {
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: Icon(icon, color: Colors.grey),
-          title: Text(items[index]['description']),
-          onTap: () => _showRoute({'place': items[index]}),
-        );
-      },
-    );
-  }
-
-  Widget _buildRouteDetailsSheet() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Card(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Route to Destination", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(children: [const Text("Distance", style: TextStyle(color: Colors.grey)), Text(_routeInfo['distance'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
-                  Column(children: [const Text("Duration", style: TextStyle(color: Colors.grey)), Text(_routeInfo['duration'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))]),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _clearRoute,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE97C7C), foregroundColor: Colors.white),
-                child: const Text("Clear Route"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsightsSheet(ScrollController scrollController) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -5))],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.only(top: 8, bottom: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF4BE6C),
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-            ),
-            child: Center(
-              child: Column(
-                children: [
-                  Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 8), decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(2))),
-                  const Text("Taga ZAPAC says...", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              controller: scrollController,
-              itemCount: _chatMessages.length,
-              itemBuilder: (context, index) => _buildInsightCard(_chatMessages[index]),
-              separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInsightCard(ChatMessage message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(radius: 25, backgroundImage: NetworkImage(message.imageUrl)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(message.sender, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (message.isMostHelpful)
-                      Container(
-                        margin: const EdgeInsets.only(left: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: const Color(0xFF6CA89A).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
-                        child: const Text('💡 Most Helpful', style: TextStyle(color: Color(0xFF6CA89A), fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                    const Spacer(),
-                    const Icon(Icons.more_horiz, color: Colors.grey),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(message.message, style: const TextStyle(fontSize: 14)),
-                const SizedBox(height: 8),
-                Text('Route: ${message.route}  |  ${message.timeAgo}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    ),
+  );
 }
 
 class SearchBar extends StatelessWidget {
@@ -634,19 +586,36 @@ class SearchBar extends StatelessWidget {
           decoration: ShapeDecoration(
             color: const Color(0xFFD9E0EA),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
-            shadows: [BoxShadow(color: const Color(0xFF4A6FA5).withOpacity(0.4), blurRadius: 6.8, offset: const Offset(2, 5))],
+            shadows: [
+              BoxShadow(
+                color: const Color(0xFF4A6FA5).withOpacity(0.4),
+                blurRadius: 6.8,
+                offset: const Offset(2, 5),
+              ),
+            ],
           ),
           child: Row(
             children: [
               const Icon(Icons.search, color: Color(0xFF6CA89A)),
               const SizedBox(width: 8),
-              const Expanded(child: Text('Where to?', style: TextStyle(color: Colors.black54, fontSize: 16))),
+              const Expanded(
+                child: Text(
+                  'Where to?',
+                  style: TextStyle(color: Colors.black54, fontSize: 16),
+                ),
+              ),
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage())),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                ),
                 child: Container(
                   width: 34,
                   height: 32,
-                  decoration: const BoxDecoration(color: Color(0xFF6CA89A), shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF6CA89A),
+                    shape: BoxShape.circle,
+                  ),
                   child: const Icon(Icons.account_circle, color: Colors.white),
                 ),
               ),
@@ -663,22 +632,39 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-     return Container(
+    return Container(
       height: 88,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 28),
       decoration: const BoxDecoration(
         color: Color(0xFF4A6FA5),
-        boxShadow: [BoxShadow(blurRadius: 4, offset: Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 4,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.home, size: 30, color: Colors.white)),
-          IconButton(onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()));
-          }, icon: const Icon(Icons.bookmark, size: 30, color: Colors.white)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.menu, size: 30, color: Colors.white)),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.home, size: 30, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
+              );
+            },
+            icon: const Icon(Icons.bookmark, size: 30, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.menu, size: 30, color: Colors.white),
+          ),
         ],
       ),
     );

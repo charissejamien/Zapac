@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // your BottomNavBar
+import 'dashboard.dart'; // Remove this line
+import 'bottom_navbar.dart'; // Add this line to directly import BottomNavBar
+import 'auth_screen.dart'; // Import your login screen file
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,24 +26,41 @@ class _ProfilePageState extends State<ProfilePage> {
   static const Color greenButtonColor = Color(0xFF6CA89A);
   static const Color coralRed = Color(0xFFE97C7C);
 
+  // Add a state variable for the selected index of the BottomNavBar
+  int _selectedIndex = 0; // Default to the first tab
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Add navigation logic here based on the index
+    if (index == 0) {
+      // Assuming index 0 is the Dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Dashboard()),
+      );
+    }
+    // You can add more navigation logic for other indices as needed
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: primaryColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildInfoSection(context),
-          ],
-        ),
+        child: Column(children: [_buildHeader(), _buildInfoSection(context)]),
       ),
-      bottomNavigationBar: const BottomNavBar(),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
     );
   }
 
   Widget _buildHeader() {
-    final fullName = '$_firstName ${_middleName.isNotEmpty ? '$_middleName ' : ''}$_lastName';
+    final fullName =
+        '$_firstName ${_middleName.isNotEmpty ? '$_middleName ' : ''}$_lastName';
     return Container(
       width: double.infinity,
       color: primaryColor,
@@ -55,7 +74,10 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   _email,
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(width: 4),
@@ -70,16 +92,24 @@ class _ProfilePageState extends State<ProfilePage> {
             child: CircleAvatar(
               radius: 52,
               backgroundImage: NetworkImage(
-                  'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg'),
+                'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg',
+              ),
             ),
           ),
           const SizedBox(height: 15),
           Text(
             fullName,
-            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 5),
-          const Text('Daily Commuter', style: TextStyle(color: Colors.white70, fontSize: 16)),
+          const Text(
+            'Daily Commuter',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
         ],
       ),
     );
@@ -149,7 +179,11 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Text(
                 'Change your email',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -162,8 +196,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'New Email',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -172,8 +211,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'New Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -187,7 +231,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         shape: const StadiumBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Cancel', style: TextStyle(color: Colors.white, fontSize: 16)),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -202,7 +249,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         shape: const StadiumBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Submit', style: TextStyle(color: Colors.white, fontSize: 16)),
+                      child: const Text(
+                        'Submit',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
@@ -239,7 +289,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Text(
                     'Delete your Account?',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: coralRed),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: coralRed,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -251,7 +305,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   // radio options
                   ...options.map((opt) {
                     return RadioListTile<String>(
-                      title: Text(opt, style: TextStyle(color: Colors.grey[800])),
+                      title: Text(
+                        opt,
+                        style: TextStyle(color: Colors.grey[800]),
+                      ),
                       value: opt,
                       groupValue: reason,
                       activeColor: coralRed,
@@ -267,14 +324,25 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: TextButton(
                       onPressed: () {
                         // TODO: call your delete-account API, then:
-                        Navigator.of(ctx).pop();
+                        // Navigator.of(ctx).pop(); // Remove this line
+                        Navigator.pushAndRemoveUntil(
+                          // Add this line
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AuthScreen(),
+                          ), // Replace LoginScreen() with your actual login page widget
+                          (Route<dynamic> route) => false,
+                        );
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: coralRed,
                         shape: const StadiumBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Delete Account', style: TextStyle(color: Colors.white, fontSize: 16)),
+                      child: const Text(
+                        'Delete Account',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
@@ -324,12 +392,22 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const Text(
                 'Edit your data',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
               ),
               const SizedBox(height: 20),
-              _buildNameTextField(controller: firstCtrl, labelText: 'First name'),
+              _buildNameTextField(
+                controller: firstCtrl,
+                labelText: 'First name',
+              ),
               const SizedBox(height: 15),
-              _buildNameTextField(controller: middleCtrl, labelText: 'Middle name'),
+              _buildNameTextField(
+                controller: middleCtrl,
+                labelText: 'Middle name',
+              ),
               const SizedBox(height: 15),
               _buildNameTextField(controller: lastCtrl, labelText: 'Last name'),
               const SizedBox(height: 30),
@@ -343,7 +421,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   }),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: greenButtonColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text('OK'),
@@ -368,20 +448,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildNameTextField({
     required TextEditingController controller,
     required String labelText,
-  }) =>
-      TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: labelText,
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          enabledBorder:
-              OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor)),
-          focusedBorder:
-              OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor)),
-        ),
-      );
+  }) => TextField(
+    controller: controller,
+    decoration: InputDecoration(
+      labelText: labelText,
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor),
+      ),
+    ),
+  );
 
   // ——————— Gender sheet & Date picker (unchanged) ———————
   void _showGenderSelectionDialog(BuildContext context) {
@@ -390,7 +473,9 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx2, setState2) {
           return Container(
@@ -415,8 +500,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                 ),
-                const Text('Please specify your gender',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Please specify your gender',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 20),
                 RadioListTile<String>(
                   title: const Text('Male'),
@@ -438,7 +525,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(onPressed: () => Navigator.of(sheetCtx).pop(), child: const Text('Cancel')),
+                    TextButton(
+                      onPressed: () => Navigator.of(sheetCtx).pop(),
+                      child: const Text('Cancel'),
+                    ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
@@ -447,11 +537,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.of(sheetCtx).pop();
                         }
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-                      child: const Text('OK', style: TextStyle(color: Colors.white)),
-                    )
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           );
@@ -505,11 +600,15 @@ class _InfoRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (label != null) Text(label!, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                if (label != null)
+                  Text(
+                    label!,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  ),
                 if (label != null) const SizedBox(height: 2),
                 Text(value, style: TextStyle(color: valueColor, fontSize: 16)),
               ],
-            )
+            ),
           ],
         ),
         const SizedBox(height: 15),
@@ -548,13 +647,23 @@ class _TappableInfoRow extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                    Text(
+                      label,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                    ),
                     const SizedBox(height: 2),
-                    Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                    Text(
+                      value,
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                    ),
                   ],
                 ),
                 const Spacer(),
-                const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey,
+                  size: 16,
+                ),
               ],
             ),
           ),
