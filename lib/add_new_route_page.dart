@@ -154,6 +154,10 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
 
     final routeData = _directionsResponse!['routes'][0];
     final leg = routeData['legs'][0];
+    
+    // Get the start and end coordinates
+    final startLocation = leg['start_location'];
+    final endLocation = leg['end_location'];
 
     final newRoute = FavoriteRoute(
       routeName: _routeNameController.text,
@@ -163,12 +167,21 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       duration: leg['duration']['text'],
       polylinePoints: _polylines.first.points,
       bounds: _createBounds(_polylines.first.points),
+      latitude: endLocation['lat'], // Save destination coordinates
+      longitude: endLocation['lng'],
+      startLatitude: startLocation['lat'], // Save starting coordinates
+      startLongitude: startLocation['lng'],
+      polylineEncoded: routeData['overview_polyline']['points'], // Save encoded polyline
     );
 
-    // --- FIX: Add the new route to the shared list ---
+    // Add the new route to the shared list
     favoriteRoutes.add(newRoute);
 
-    Navigator.pop(context); // Pop without returning a value
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Route saved successfully!')),
+    );
+
+    Navigator.pop(context);
   }
 
   LatLngBounds _createBounds(List<LatLng> positions) {
