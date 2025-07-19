@@ -87,29 +87,54 @@ class _DashboardState extends State<Dashboard> {
     super.dispose();
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      getCurrentLocationAndMarker(_markers, _mapController, context);
-    });
-  }
+ void _onMapCreated(GoogleMapController controller) {
+  _mapController = controller;
 
-  Future<void> _getCurrentLocationAndMarker() async {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    if (!mounted) return;
+
     try {
       await getCurrentLocationAndMarker(_markers, _mapController, context).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location fetch timed out.')),
           );
         },
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching location: $e')),
       );
     }
+
+    setState(() {}); // Ensure state refresh after adding marker
+  });
+}
+
+
+
+  Future<void> _getCurrentLocationAndMarker() async {
+  try {
+    await getCurrentLocationAndMarker(_markers, _mapController, context).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location fetch timed out.')),
+        );
+      },
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error fetching location: $e')),
+    );
   }
+}
+
 
   // --- Placeholder for missing methods referenced in the code ---
   void _showAddInsightSheet() {
@@ -264,47 +289,45 @@ class SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AbsorbPointer(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: ShapeDecoration(
-            color: const Color(0xFFD9E0EA),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
-            shadows: [
-              BoxShadow(
-                color: const Color(0xFF4A6FA5).withOpacity(0.4),
-                blurRadius: 6.8,
-                offset: const Offset(2, 5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: ShapeDecoration(
+          color: const Color(0xFFD9E0EA),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
+          shadows: [
+            BoxShadow(
+              color: const Color(0xFF4A6FA5).withOpacity(0.4),
+              blurRadius: 6.8,
+              offset: const Offset(2, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: Color(0xFF6CA89A)),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Where to?',
+                style: TextStyle(color: Colors.black54, fontSize: 16),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.search, color: Color(0xFF6CA89A)),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Where to?',
-                  style: TextStyle(color: Colors.black54, fontSize: 16),
-                ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
               ),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+              child: Container(
+                width: 34,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6CA89A),
+                  shape: BoxShape.circle,
                 ),
-                child: Container(
-                  width: 34,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF6CA89A),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.account_circle, color: Colors.white),
-                ),
+                child: const Icon(Icons.account_circle, color: Colors.white),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

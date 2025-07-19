@@ -1,7 +1,9 @@
+// lib/profile_page.dart
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Remove this line
-import 'bottom_navbar.dart'; // Add this line to directly import BottomNavBar
-import 'auth_screen.dart'; // Import your login screen file
+import 'dashboard.dart';
+import 'bottom_navbar.dart';
+import 'auth_screen.dart';
+import 'settings_page.dart'; // Import the new settings page
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -10,7 +12,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // --- your profile state
   String _firstName = 'Kerropi';
   String _middleName = 'P.';
   String _lastName = 'Kokak';
@@ -19,29 +20,24 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _selectedGender;
   DateTime? _selectedDateOfBirth;
 
-  // --- your brand colors
   static const Color primaryColor = Color(0xFF4A6FA5);
   static const Color accentYellow = Color(0xFFFFD700);
   static const Color orangeLineColor = Color(0xFFF4BE6C);
   static const Color greenButtonColor = Color(0xFF6CA89A);
   static const Color coralRed = Color(0xFFE97C7C);
 
-  // Add a state variable for the selected index of the BottomNavBar
-  int _selectedIndex = 0; // Default to the first tab
+  int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // Add navigation logic here based on the index
     if (index == 0) {
-      // Assuming index 0 is the Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const Dashboard()),
       );
     }
-    // You can add more navigation logic for other indices as needed
   }
 
   @override
@@ -110,6 +106,27 @@ class _ProfilePageState extends State<ProfilePage> {
             'Daily Commuter',
             style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to the SettingsPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: greenButtonColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Settings',
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ),
         ],
       ),
     );
@@ -146,7 +163,6 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: () => _selectDateOfBirth(context),
             ),
             const SizedBox(height: 15),
-            // wrap your existing red row in an InkWell
             InkWell(
               onTap: () => _showDeleteAccountDialog(context),
               child: const _InfoRow(
@@ -161,7 +177,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ——————— Change Email dialog (as before) ———————
   void _showChangeEmailDialog(BuildContext context) {
     final newEmailController = TextEditingController(text: _email);
     final newPasswordController = TextEditingController();
@@ -264,7 +279,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ——————— Delete Account dialog ———————
   void _showDeleteAccountDialog(BuildContext context) {
     String? reason;
     final options = [
@@ -302,7 +316,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // radio options
                   ...options.map((opt) {
                     return RadioListTile<String>(
                       title: Text(
@@ -318,19 +331,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   }).toList(),
 
                   const SizedBox(height: 24),
-                  // delete button
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () {
-                        // TODO: call your delete-account API, then:
-                        // Navigator.of(ctx).pop(); // Remove this line
                         Navigator.pushAndRemoveUntil(
-                          // Add this line
                           context,
                           MaterialPageRoute(
                             builder: (context) => AuthScreen(),
-                          ), // Replace LoginScreen() with your actual login page widget
+                          ),
                           (Route<dynamic> route) => false,
                         );
                       },
@@ -354,7 +363,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ——————— Full name bottom sheet (unchanged) ———————
   void _showEditFullNameSheet(BuildContext context) async {
     final firstCtrl = TextEditingController(text: _firstName);
     final middleCtrl = TextEditingController(text: _middleName);
@@ -442,7 +450,6 @@ class _ProfilePageState extends State<ProfilePage> {
         _lastName = result['last']!;
       });
     }
-    // controllers get GC’d automatically
   }
 
   Widget _buildNameTextField({
@@ -466,7 +473,6 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   );
 
-  // ——————— Gender sheet & Date picker (unchanged) ———————
   void _showGenderSelectionDialog(BuildContext context) {
     String? temp = _selectedGender;
     showModalBottomSheet(
@@ -575,7 +581,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-/// Static info row (used for Delete account)
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String? label;
@@ -618,7 +623,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Tappable info row (Full name, Gender, DOB)
 class _TappableInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
