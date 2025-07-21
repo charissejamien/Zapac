@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
+import 'favorite_routes_page.dart'; // Import FavoriteRoutesPage
 
 class BottomNavBar extends StatefulWidget {
   final int selectedIndex;
@@ -33,6 +34,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             onTap: () {
               widget.onItemTapped(0);
               // Example navigation back to Dashboard
+              // Only navigate if not already on the dashboard to prevent unnecessary pushes
               if (ModalRoute.of(context)?.settings.name != '/') {
                 Navigator.pushReplacement(
                   context,
@@ -49,7 +51,14 @@ class _BottomNavBarState extends State<BottomNavBar> {
             ),
           ),
           GestureDetector(
-            onTap: () => widget.onItemTapped(1),
+            onTap: () {
+              widget.onItemTapped(1);
+              // Navigate to FavoriteRoutesPage when bookmark icon is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
+              );
+            },
             child: Icon(
               Icons.bookmark,
               size: 30,

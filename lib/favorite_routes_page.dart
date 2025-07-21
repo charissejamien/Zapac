@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zapac/add_new_route_page.dart';
-import 'package:zapac/models/favorite_route.dart'; // Import the new model
-import 'package:zapac/route_detail_page.dart'; // Import the detail page
+import 'package:zapac/models/favorite_route.dart';
+import 'package:zapac/route_detail_page.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
 
 class FavoriteRoutesPage extends StatefulWidget {

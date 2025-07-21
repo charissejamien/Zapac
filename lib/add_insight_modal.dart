@@ -113,5 +113,5 @@ void showAddInsightModal({
         ),
       );
     },
-  ); // <--- Removed .whenComplete() here
+  );
 }
