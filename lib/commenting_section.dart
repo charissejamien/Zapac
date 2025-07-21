@@ -28,7 +28,13 @@ class ChatMessage {
 }
 
 class CommentingSection extends StatefulWidget {
-  const CommentingSection({super.key});
+  // Add this callback to notify parent about expansion state
+  final ValueSetter<bool>? onExpansionChanged;
+
+  const CommentingSection({
+    super.key,
+    this.onExpansionChanged,
+  });
 
   @override
   State<CommentingSection> createState() => _CommentingSectionState();
@@ -103,10 +109,13 @@ class _CommentingSectionState extends State<CommentingSection> {
   void initState() {
     super.initState();
     _sheetController.addListener(() {
-      if (_sheetController.size >= 0.85 && !_isSheetFullyExpanded) {
-        setState(() => _isSheetFullyExpanded = true);
-      } else if (_sheetController.size < 0.85 && _isSheetFullyExpanded) {
-        setState(() => _isSheetFullyExpanded = false);
+      final bool isExpandedNow = _sheetController.size >= 0.85;
+      if (isExpandedNow != _isSheetFullyExpanded) {
+        setState(() {
+          _isSheetFullyExpanded = isExpandedNow;
+        });
+        // Call the callback to notify the parent
+        widget.onExpansionChanged?.call(_isSheetFullyExpanded);
       }
     });
   }
