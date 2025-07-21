@@ -36,7 +36,7 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   Rect? _activeFieldRect;
 
   Set<Polyline> _polylines = {};
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
   GoogleMapController? _mapController;
 
   @override
