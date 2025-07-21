@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart'; // MODIFIED: Import the full AuthScreen
+import 'auth_screen.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});

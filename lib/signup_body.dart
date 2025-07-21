@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auth_screen.dart';
 
 class SignUpBody extends StatefulWidget {
   const SignUpBody({super.key});
@@ -9,6 +10,7 @@ class SignUpBody extends StatefulWidget {
 
 class _SignUpBodyState extends State<SignUpBody> {
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true; // Added for independent confirm password visibility
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -58,15 +60,15 @@ class _SignUpBodyState extends State<SignUpBody> {
           Text("   Confirm Password", style: TextStyle(fontSize: 16)),
           TextField(
             controller: confirmPasswordController,
-            obscureText: true,
+            obscureText: _obscureConfirmPassword, // Use the new state variable
             decoration: _inputDecoration(
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword
+                icon: Icon(_obscureConfirmPassword // Use the new state variable
                     ? Icons.visibility_off
                     : Icons.visibility),
                 onPressed: () {
                   setState(() {
-                    _obscurePassword = !_obscurePassword;
+                    _obscureConfirmPassword = !_obscureConfirmPassword; // Toggle the new state variable
                   });
                 },
               ),
@@ -75,7 +77,10 @@ class _SignUpBodyState extends State<SignUpBody> {
           SizedBox(height: 35),
           ElevatedButton(
             onPressed: () {
-              // Add your sign-up logic here
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => AuthScreen()),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF6CA89A),
