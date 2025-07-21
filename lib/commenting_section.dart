@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 // --- Dummy Data for Chat Messages ---
+// If ChatMessage is used elsewhere, consider moving it to lib/models/chat_message.dart
 class ChatMessage {
   final String sender;
   final String message;
@@ -28,12 +29,15 @@ class ChatMessage {
 }
 
 class CommentingSection extends StatefulWidget {
-  // Add this callback to notify parent about expansion state
   final ValueSetter<bool>? onExpansionChanged;
+  final List<ChatMessage> chatMessages; // MODIFIED: Receive chat messages from parent
+  final ValueSetter<ChatMessage>? onNewInsightAdded; // Optional: If CommentingSection's internal modal adds.
 
   const CommentingSection({
     super.key,
     this.onExpansionChanged,
+    required this.chatMessages, // Required to receive messages
+    this.onNewInsightAdded,
   });
 
   @override
@@ -48,63 +52,6 @@ class _CommentingSectionState extends State<CommentingSection> {
   bool _isSheetFullyExpanded = false;
   String _selectedFilter = 'All';
 
-  // MODIFIED: Updated dummy data to match the UI and include 'isMostHelpful'
-  final List<ChatMessage> _chatMessages = [
-    ChatMessage(
-      sender: 'Zole Laverne',
-      message:
-          '“Ig 6PM juseyo, expect traffic sa Escariomida. Sakay nalang sa other side then walk to Ayala. Arraseo?”',
-      route: 'Escario',
-      timeAgo: '2 days ago',
-      imageUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&h=500&fit=crop',
-      likes: 15,
-      isMostHelpful: true,
-    ),
-    ChatMessage(
-      sender: 'Charisse Pempengco',
-      message:
-          '“Na agaw mog agi likod sa CDU kai na.... naay d mahimutang. Naa sya ddto mag atang”',
-      route: 'Cebu Doc',
-      timeAgo: '6 days ago',
-      imageUrl:
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&h=500&fit=crop',
-      likes: 8,
-      dislikes: 1,
-    ),
-    ChatMessage(
-      sender: 'Kyline Alcantara',
-      message:
-          '“Kuyaw kaaio sa Carbon. Naay nangutana nako ug wat nafen vela? why u crying again? unya nikanta ug thousand years.... kuyawa sa mga adik rn...”',
-      route: 'Carbon',
-      timeAgo: '9 days ago',
-      imageUrl:
-          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&h=500&fit=crop',
-      likes: 22,
-      dislikes: 2,
-    ),
-    ChatMessage(
-      sender: 'Adopted Brother ni Mikha Lim',
-      message:
-          '“Ang plete kai tag 12 pesos pero ngano si kuya driver nangayo ug 15 pesos? SMACK THAT.”',
-      route: 'Lahug – Carbon',
-      timeAgo: 'Just Now',
-      imageUrl:
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500&h=500&fit=crop',
-      likes: 5,
-    ),
-    ChatMessage(
-      sender: 'Unknown',
-      message:
-          '“Shortcut to terminal: cut through Gaisano Mall ground floor!!!!!!”',
-      route: 'Puente',
-      timeAgo: '1 week ago',
-      imageUrl:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
-      dislikes: 7,
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -114,7 +61,6 @@ class _CommentingSectionState extends State<CommentingSection> {
         setState(() {
           _isSheetFullyExpanded = isExpandedNow;
         });
-        // Call the callback to notify the parent
         widget.onExpansionChanged?.call(_isSheetFullyExpanded);
       }
     });
@@ -127,6 +73,13 @@ class _CommentingSectionState extends State<CommentingSection> {
     super.dispose();
   }
 
+  // The _showAddInsightSheet in CommentingSection:
+  // Now, if this method is still intended to be called, it needs to use the
+  // onNewInsightAdded callback to notify the parent Dashboard about a new message.
+  // However, since Dashboard's FAB directly calls showAddInsightModal,
+  // this method might become redundant unless CommentingSection has its own way to show it.
+  // For consistency, let's keep it here but assume its usage is primarily internal
+  // or via a separate trigger. It needs to notify the parent.
   void _showAddInsightSheet() {
     final TextEditingController insightController = TextEditingController();
     final TextEditingController routeController = TextEditingController();
@@ -206,19 +159,15 @@ class _CommentingSectionState extends State<CommentingSection> {
                   onPressed: () {
                     if (insightController.text.trim().isNotEmpty &&
                         routeController.text.trim().isNotEmpty) {
-                      setState(() {
-                        _chatMessages.insert(
-                          0,
-                          ChatMessage(
-                            sender: 'Kerropi',
-                            message: '“${insightController.text.trim()}”',
-                            route: routeController.text.trim(),
-                            timeAgo: 'Just now',
-                            imageUrl:
-                                'https://cdn-icons-png.flaticon.com/512/100/100913.png',
-                          ),
-                        );
-                      });
+                      final newInsight = ChatMessage(
+                        sender: 'Kerropi',
+                        message: '“${insightController.text.trim()}”',
+                        route: routeController.text.trim(),
+                        timeAgo: 'Just now',
+                        imageUrl:
+                            'https://cdn-icons-png.flaticon.com/512/100/100913.png',
+                      );
+                      widget.onNewInsightAdded?.call(newInsight); // Notify parent
                       Navigator.pop(context);
                     }
                   },
@@ -241,9 +190,10 @@ class _CommentingSectionState extends State<CommentingSection> {
     );
   }
 
+  // MODIFIED: These now operate on the widget.chatMessages list
   void _toggleLike(int index) {
     setState(() {
-      final message = _chatMessages[index];
+      final message = widget.chatMessages[index]; // Use widget.chatMessages
       message.isLiked = !message.isLiked;
       message.likes += message.isLiked ? 1 : -1;
       if (message.isLiked && message.isDisliked) {
@@ -255,7 +205,7 @@ class _CommentingSectionState extends State<CommentingSection> {
 
   void _toggleDislike(int index) {
     setState(() {
-      final message = _chatMessages[index];
+      final message = widget.chatMessages[index]; // Use widget.chatMessages
       message.isDisliked = !message.isDisliked;
       message.dislikes += message.isDisliked ? 1 : -1;
       if (message.isDisliked && message.isLiked) {
@@ -321,7 +271,8 @@ class _CommentingSectionState extends State<CommentingSection> {
                                 child: Text('Report'),
                               ),
                             ];
-                            if (message.sender == 'You') {
+                            // MODIFIED: Check sender name based on your user data
+                            if (message.sender == 'Kerropi') { // Assuming Kerropi is the local user
                               menuItems.add(
                                 const PopupMenuItem(
                                   value: 'delete',
@@ -367,8 +318,11 @@ class _CommentingSectionState extends State<CommentingSection> {
                                 ),
                               );
                               if (confirm == true) {
+                                // You would need a callback here to notify Dashboard
+                                // to remove the message from its _chatMessages list.
+                                // For now, this will only remove it visually until rebuild.
                                 setState(() {
-                                  _chatMessages.removeAt(index);
+                                  widget.chatMessages.removeAt(index); // This directly modifies the list passed from parent.
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -565,9 +519,9 @@ class _CommentingSectionState extends State<CommentingSection> {
               Expanded(
                 child: ListView.separated(
                   controller: scrollController,
-                  itemCount: _chatMessages.length,
+                  itemCount: widget.chatMessages.length, // Use widget.chatMessages
                   itemBuilder: (context, index) {
-                    return _buildInsightCard(_chatMessages[index], index);
+                    return _buildInsightCard(widget.chatMessages[index], index); // Use widget.chatMessages
                   },
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,
