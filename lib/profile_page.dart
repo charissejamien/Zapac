@@ -315,7 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onChanged: (val) => setState2(() => reason = val),
                       contentPadding: EdgeInsets.zero,
                     );
-                  }).toList(),
+                  }),
 
                   const SizedBox(height: 24),
                   // delete button
