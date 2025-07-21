@@ -30,13 +30,13 @@ class ChatMessage {
 
 class CommentingSection extends StatefulWidget {
   final ValueSetter<bool>? onExpansionChanged;
-  final List<ChatMessage> chatMessages; // MODIFIED: Receive chat messages from parent
+  final List<ChatMessage> chatMessages; // ADDED: Receive chat messages from parent
   final ValueSetter<ChatMessage>? onNewInsightAdded; // Optional: If CommentingSection's internal modal adds.
 
   const CommentingSection({
     super.key,
     this.onExpansionChanged,
-    required this.chatMessages, // Required to receive messages
+    required this.chatMessages, // ADDED: Required to receive messages
     this.onNewInsightAdded,
   });
 
@@ -52,16 +52,22 @@ class _CommentingSectionState extends State<CommentingSection> {
   bool _isSheetFullyExpanded = false;
   String _selectedFilter = 'All';
 
+  // MODIFIED: _chatMessages is now handled by the parent (Dashboard)
+  // The internal list is removed here as it will be passed via widget.chatMessages.
+  // Original dummy data from here is now in Dashboard.
+
   @override
   void initState() {
     super.initState();
     _sheetController.addListener(() {
       final bool isExpandedNow = _sheetController.size >= 0.85;
       if (isExpandedNow != _isSheetFullyExpanded) {
-        setState(() {
-          _isSheetFullyExpanded = isExpandedNow;
-        });
-        widget.onExpansionChanged?.call(_isSheetFullyExpanded);
+        if (mounted) {
+          setState(() {
+            _isSheetFullyExpanded = isExpandedNow;
+          });
+        }
+        widget.onExpansionChanged?.call(_isSheetFullyExpanded); // Call the callback if provided
       }
     });
   }
@@ -73,13 +79,9 @@ class _CommentingSectionState extends State<CommentingSection> {
     super.dispose();
   }
 
-  // The _showAddInsightSheet in CommentingSection:
-  // Now, if this method is still intended to be called, it needs to use the
-  // onNewInsightAdded callback to notify the parent Dashboard about a new message.
-  // However, since Dashboard's FAB directly calls showAddInsightModal,
-  // this method might become redundant unless CommentingSection has its own way to show it.
-  // For consistency, let's keep it here but assume its usage is primarily internal
-  // or via a separate trigger. It needs to notify the parent.
+  // This _showAddInsightSheet is intended to be the internal modal for CommentingSection.
+  // If the FloatingActionButton in Dashboard calls the separate add_insight_modal.dart,
+  // this method might only be called if CommentingSection itself has another trigger.
   void _showAddInsightSheet() {
     final TextEditingController insightController = TextEditingController();
     final TextEditingController routeController = TextEditingController();
@@ -167,7 +169,7 @@ class _CommentingSectionState extends State<CommentingSection> {
                         imageUrl:
                             'https://cdn-icons-png.flaticon.com/512/100/100913.png',
                       );
-                      widget.onNewInsightAdded?.call(newInsight); // Notify parent
+                      widget.onNewInsightAdded?.call(newInsight); // Notify parent if callback is provided
                       Navigator.pop(context);
                     }
                   },
@@ -187,32 +189,38 @@ class _CommentingSectionState extends State<CommentingSection> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      insightController.dispose();
+      routeController.dispose();
+    });
   }
 
-  // MODIFIED: These now operate on the widget.chatMessages list
   void _toggleLike(int index) {
-    setState(() {
-      final message = widget.chatMessages[index]; // Use widget.chatMessages
-      message.isLiked = !message.isLiked;
-      message.likes += message.isLiked ? 1 : -1;
-      if (message.isLiked && message.isDisliked) {
-        message.isDisliked = false;
-        message.dislikes -= 1;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        final message = widget.chatMessages[index]; // Use widget.chatMessages
+        message.isLiked = !message.isLiked;
+        message.likes += message.isLiked ? 1 : -1;
+        if (message.isLiked && message.isDisliked) {
+          message.isDisliked = false;
+          message.dislikes -= 1;
+        }
+      });
+    }
   }
 
   void _toggleDislike(int index) {
-    setState(() {
-      final message = widget.chatMessages[index]; // Use widget.chatMessages
-      message.isDisliked = !message.isDisliked;
-      message.dislikes += message.isDisliked ? 1 : -1;
-      if (message.isDisliked && message.isLiked) {
-        message.isLiked = false;
-        message.likes -= 1;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        final message = widget.chatMessages[index]; // Use widget.chatMessages
+        message.isDisliked = !message.isDisliked;
+        message.dislikes += message.isDisliked ? 1 : -1;
+        if (message.isDisliked && message.isLiked) {
+          message.isLiked = false;
+          message.likes -= 1;
+        }
+      });
+    }
   }
 
   Widget _buildInsightCard(ChatMessage message, int index) {
@@ -271,8 +279,7 @@ class _CommentingSectionState extends State<CommentingSection> {
                                 child: Text('Report'),
                               ),
                             ];
-                            // MODIFIED: Check sender name based on your user data
-                            if (message.sender == 'Kerropi') { // Assuming Kerropi is the local user
+                            if (message.sender == 'You') {
                               menuItems.add(
                                 const PopupMenuItem(
                                   value: 'delete',
@@ -318,12 +325,14 @@ class _CommentingSectionState extends State<CommentingSection> {
                                 ),
                               );
                               if (confirm == true) {
-                                // You would need a callback here to notify Dashboard
-                                // to remove the message from its _chatMessages list.
-                                // For now, this will only remove it visually until rebuild.
-                                setState(() {
-                                  widget.chatMessages.removeAt(index); // This directly modifies the list passed from parent.
-                                });
+                                if (mounted) {
+                                  // This will directly modify the list passed from parent.
+                                  // For a robust solution, consider a callback to Dashboard
+                                  // to allow Dashboard to manage its own list mutations.
+                                  setState(() {
+                                    widget.chatMessages.removeAt(index);
+                                  });
+                                }
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Comment deleted.'),
@@ -410,10 +419,12 @@ class _CommentingSectionState extends State<CommentingSection> {
       label: Text(label),
       selected: isSelected,
       onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _selectedFilter = label;
-          });
+        if (mounted) {
+          if (selected) {
+            setState(() {
+              _selectedFilter = label;
+            });
+          }
         }
       },
       backgroundColor: Colors.white,
@@ -519,9 +530,9 @@ class _CommentingSectionState extends State<CommentingSection> {
               Expanded(
                 child: ListView.separated(
                   controller: scrollController,
-                  itemCount: widget.chatMessages.length, // Use widget.chatMessages
+                  itemCount: widget.chatMessages.length, // MODIFIED: Use widget.chatMessages
                   itemBuilder: (context, index) {
-                    return _buildInsightCard(widget.chatMessages[index], index); // Use widget.chatMessages
+                    return _buildInsightCard(widget.chatMessages[index], index); // MODIFIED: Use widget.chatMessages
                   },
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,
