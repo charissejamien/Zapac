@@ -215,9 +215,20 @@ class _DashboardState extends State<Dashboard> {
   }
 
   void _onCommunityInsightExpansionChanged(bool isExpanded) {
-    setState(() {
-      _isCommunityInsightExpanded = isExpanded;
-    });
+    if (mounted) { // ADDED mounted check
+      setState(() {
+        _isCommunityInsightExpanded = isExpanded;
+      });
+    }
+  }
+
+  // Callback for when a new insight is added from the modal
+  void _addNewInsight(ChatMessage newInsight) {
+    if (mounted) { // ADDED mounted check, crucial for callbacks from modals
+      setState(() {
+        _chatMessages.insert(0, newInsight);
+      });
+    }
   }
 
   @override
@@ -226,27 +237,8 @@ class _DashboardState extends State<Dashboard> {
       floatingActionButton: FloatingButton(
         isCommunityInsightExpanded: _isCommunityInsightExpanded,
         onAddInsightPressed: () {
-          // Placeholder for what happens when 'add insight' button is pressed.
-          // In a real app, you might want to call a method on CommentingSection
-          // to show its add insight modal.
-          // For now, let's just print a message or show a dummy snackbar.
-          print('Add Insight button pressed!');
-          // If you want to show the modal from CommentingSection, you'd need
-          // a GlobalKey for CommentingSection or a shared state/controller.
-          // As _showAddInsightSheet is private in CommentingSection's state,
-          // it needs to be made public or exposed via a controller.
-          // For demonstration, let's just show a simple dialog here.
-          // To properly call CommentingSection's internal _showAddInsightSheet,
-          // you would need to refactor CommentingSection to expose it,
-          // e.g., via a GlobalKey<CommentingSectionState>()._showAddInsightSheet();
-          // Or, CommentingSection itself would be responsible for rendering its FAB
-          // and handling the press, in which case Dashboard wouldn't have this FAB.
-          // Since the user explicitly asked for a separate floating_button.dart,
-          // we are keeping FAB in Dashboard and controlling it via state.
-
-          // Simplified action: Directly show a dummy bottom sheet for adding insight.
-          // For actual integration, you'd integrate with CommentingSection's logic.
-          showModalBottomSheet(
+          // Call your new showAddInsightModal function
+          showAddInsightModal(
             context: context,
             onInsightAdded: _addNewInsight, // Pass the callback to add new insight
           );
