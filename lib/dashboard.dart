@@ -268,9 +268,8 @@ class _DashboardState extends State<Dashboard> {
               ),
             ),
 
-            // Pass the chat messages and the expansion callback to CommentingSection
+            // Pass the chat messages to CommentingSection
             CommentingSection(
-              onExpansionChanged: _onCommunityInsightExpansionChanged,
               chatMessages: _chatMessages, // Pass the list down
             ),
 
