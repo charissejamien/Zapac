@@ -113,9 +113,5 @@ void showAddInsightModal({
         ),
       );
     },
-  ).whenComplete(() {
-    // Dispose controllers when modal is closed
-    insightController.dispose();
-    routeController.dispose();
-  });
+  ); // <--- Removed .whenComplete() here
 }
