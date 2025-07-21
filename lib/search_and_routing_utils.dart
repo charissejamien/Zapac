@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
-import 'package:zapac/profile_page.dart';
 import 'map_utils.dart';
 
 Future<List<dynamic>> getPredictionsUtil(String input, String apiKey) async {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Remove this line
-import 'bottom_navbar.dart'; // Add this line to directly import BottomNavBar
-import 'auth_screen.dart'; // Import your login screen file
+import 'dashboard.dart';
+import 'bottom_navbar.dart';
+import 'auth_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -323,7 +323,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () {
-                        // TODO: call your delete-account API, then:
                         // Navigator.of(ctx).pop(); // Remove this line
                         Navigator.pushAndRemoveUntil(
                           // Add this line

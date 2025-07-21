@@ -183,64 +183,13 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-  // This is the function for the "add insight" button
-  void _showAddInsightSheet() {
-    // You'll need to get access to CommentingSection's _showAddInsightSheet
-    // One way is to pass a GlobalKey to CommentingSection and call it,
-    // or, more cleanly, CommentingSection itself would handle the modal,
-    // and this button would just trigger CommentingSection to open its modal.
-    // For now, let's assume CommentingSection exposes a public method for this.
-    // If it doesn't, you might need to adjust CommentingSection to open its own sheet
-    // when a different button (like this one) is pressed.
-
-    // A simpler approach for the _showAddInsightSheet() in Dashboard would be:
-    // When the "add insight" button is pressed, if the CommentingSection is *not* fully expanded,
-    // you might want to expand it first, and then it can show its own add insight modal.
-    // Or, you can directly show the modal from here, assuming it's independent.
-    // Let's call the `_showAddInsightSheet` method directly from CommentingSection instance.
-    // This requires a GlobalKey. Let's add that.
-
-    // For a quick fix without GlobalKey, you could try to directly call
-    // the modal sheet here, mimicking CommentingSection's logic.
-    // However, the best way is for CommentingSection to handle its own modal.
-    // As CommentingSection has `_showAddInsightSheet()`, we'll need a way
-    // to trigger it from Dashboard. A GlobalKey is a direct way.
-
-    // To prevent immediate refactoring of CommentingSection's _showAddInsightSheet logic,
-    // let's assume for now that if the FAB is 'add', it means the sheet IS expanded,
-    // and CommentingSection's internal _showAddInsightSheet is accessible/callable
-    // through its own logic (e.g., if you had a CommentingSectionController).
-    // Given the current CommentingSection, its _showAddInsightSheet is private.
-    // A GlobalKey is the most direct way to call a public method on its state.
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingButton(
         isCommunityInsightExpanded: _isCommunityInsightExpanded,
         onAddInsightPressed: () {
-          // Placeholder for what happens when 'add insight' button is pressed.
-          // In a real app, you might want to call a method on CommentingSection
-          // to show its add insight modal.
-          // For now, let's just print a message or show a dummy snackbar.
           print('Add Insight button pressed!');
-          // If you want to show the modal from CommentingSection, you'd need
-          // a GlobalKey for CommentingSection or a shared state/controller.
-          // As _showAddInsightSheet is private in CommentingSection's state,
-          // it needs to be made public or exposed via a controller.
-          // For demonstration, let's just show a simple dialog here.
-          // To properly call CommentingSection's internal _showAddInsightSheet,
-          // you would need to refactor CommentingSection to expose it,
-          // e.g., via a GlobalKey<CommentingSectionState>()._showAddInsightSheet();
-          // Or, CommentingSection itself would be responsible for rendering its FAB
-          // and handling the press, in which case Dashboard wouldn't have this FAB.
-          // Since the user explicitly asked for a separate floating_button.dart,
-          // we are keeping FAB in Dashboard and controlling it via state.
-
-          // Simplified action: Directly show a dummy bottom sheet for adding insight.
-          // For actual integration, you'd integrate with CommentingSection's logic.
           showModalBottomSheet(
             context: context,
             builder: (context) => const SizedBox(

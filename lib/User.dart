@@ -8,7 +8,7 @@ class User {
   final String firstName;
   final String lastName;
   final UserType type;
-  LatLng? currentLocation; // Nullable as location will be updated
+  LatLng? currentLocation;
 
   User({
     required this.email,

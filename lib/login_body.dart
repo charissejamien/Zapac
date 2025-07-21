@@ -91,13 +91,28 @@ class _LoginBodyState extends State<LoginBody> {
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
-              final email = emailController.text;
+              final email = emailController.text.trim(); // Trim whitespace
               final password = passwordController.text;
 
               setState(() {
-                _errorMessage = '';
+                _errorMessage = ''; // Clear previous error messages
               });
 
+              if (email.isEmpty) { // Check if email is empty
+                setState(() {
+                  _errorMessage = "Please enter your email address.";
+                });
+                return; // Stop execution if email is empty
+              }
+
+              if (password.isEmpty) { // Check if password is empty
+                setState(() {
+                  _errorMessage = "Please enter your password.";
+                });
+                return; // Stop execution if password is empty
+              }
+
+              // Your existing authentication logic
               if (email == "zoie@gmail.com" && password == "batman") {
                 Navigator.push(
                   context,
@@ -113,13 +128,13 @@ class _LoginBodyState extends State<LoginBody> {
                 if (email != "zoie@gmail.com" &&
                     email != "princess@gmail.com") {
                   setState(() {
-                    _errorMessage = "Incorrect email.";
+                    _errorMessage = "The email address you entered is incorrect.";
                   });
                 } else if ((email == "zoie@gmail.com" &&
                         password != "batman") ||
                     (email == "princess@gmail.com" && password != "superman")) {
                   setState(() {
-                    _errorMessage = "Incorrect password.";
+                    _errorMessage = "The password you entered is incorrect.";
                   });
                 }
               }
