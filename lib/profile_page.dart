@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zapac/AuthManager.dart';
+import 'package:zapac/User.dart';
 import 'dashboard.dart';
 import 'bottom_navbar.dart';
 import 'auth_screen.dart';
@@ -10,38 +12,48 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // --- your profile state
-  String _firstName = 'Kerropi';
-  String _middleName = 'P.';
-  String _lastName = 'Kokak';
-  String _email = 'kerropiandcinnamon@gmail.com';
+  // This will hold the logged-in user's data.
+  User? _currentUser;
+  bool _isLoading = true; // To handle loading state
 
-  String? _selectedGender;
-  DateTime? _selectedDateOfBirth;
-
-  // --- your brand colors
+  // --- Brand Colors ---
   static const Color primaryColor = Color(0xFF4A6FA5);
-  static const Color accentYellow = Color(0xFFFFD700);
-  static const Color orangeLineColor = Color(0xFFF4BE6C);
   static const Color greenButtonColor = Color(0xFF6CA89A);
   static const Color coralRed = Color(0xFFE97C7C);
 
-  // Add a state variable for the selected index of the BottomNavBar
-  int _selectedIndex = 0; // Default to the first tab
+  // Default to the profile tab index (e.g., 2)
+  int _selectedIndex = 2;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Safely load user data from AuthManager
+  void _loadUserData() {
+  Future.microtask(() {
+    if (mounted) {
+      print('[ProfilePage] Loading user. AuthManager says current user is: ${AuthManager().currentUser?.email}');
+      
+      setState(() {
+        _currentUser = AuthManager().currentUser;
+        _isLoading = false;
+      });
+    }
+  });
+}
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Add navigation logic here based on the index
+    if (_selectedIndex == index) return;
+
     if (index == 0) {
-      // Assuming index 0 is the Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const Dashboard()),
       );
     }
-    // You can add more navigation logic for other indices as needed
+    // Add other cases for your nav bar items
   }
 
   @override
@@ -49,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: primaryColor,
       body: SafeArea(
-        child: Column(children: [_buildHeader(), _buildInfoSection(context)]),
+        child: _buildBody(),
       ),
       bottomNavigationBar: BottomNavBar(
         selectedIndex: _selectedIndex,
@@ -58,204 +70,104 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
+    }
+
+    if (_currentUser == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("User not logged in.", style: TextStyle(color: Colors.white, fontSize: 18)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const AuthScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: const Text("Go to Login"),
+            )
+          ],
+        ),
+      );
+    }
+
+    return Column(children: [_buildHeader(), _buildInfoSection(context)]);
+  }
+
+  // --- Header Section ---
   Widget _buildHeader() {
-    final fullName =
-        '$_firstName ${_middleName.isNotEmpty ? '$_middleName ' : ''}$_lastName';
     return Container(
       width: double.infinity,
       color: primaryColor,
       padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
       child: Column(
         children: [
-          InkWell(
-            onTap: () => _showChangeEmailDialog(context),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _email,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(width: 4),
-                const Icon(Icons.edit, color: Colors.white, size: 16),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const CircleAvatar(
+          CircleAvatar(
             radius: 55,
             backgroundColor: Colors.white,
             child: CircleAvatar(
               radius: 52,
               backgroundImage: NetworkImage(
-                'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg',
+                _currentUser!.profileImageUrl ?? 'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg',
               ),
             ),
           ),
           const SizedBox(height: 15),
           Text(
-            fullName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+            _currentUser!.fullName,
+            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 5),
-          const Text(
+          Text(
             'Daily Commuter',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
           ),
         ],
       ),
     );
   }
 
+  // --- Editable Info Section ---
   Widget _buildInfoSection(BuildContext context) {
     return Expanded(
       child: Container(
         width: double.infinity,
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          children: [
-            _TappableInfoRow(
-              icon: Icons.person_outline,
-              label: 'Full name',
-              value: '$_firstName $_middleName $_lastName',
-              onTap: () => _showEditFullNameSheet(context),
-            ),
-            const SizedBox(height: 15),
-            _TappableInfoRow(
-              icon: Icons.transgender,
-              label: 'Gender',
-              value: _selectedGender ?? 'Not provided',
-              onTap: () => _showGenderSelectionDialog(context),
-            ),
-            const SizedBox(height: 15),
-            _TappableInfoRow(
-              icon: Icons.cake_outlined,
-              label: 'Date of Birth',
-              value: _selectedDateOfBirth == null
-                  ? 'Not provided'
-                  : '${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.year}',
-              onTap: () => _selectDateOfBirth(context),
-            ),
-            const SizedBox(height: 15),
-            // wrap your existing red row in an InkWell
-            InkWell(
-              onTap: () => _showDeleteAccountDialog(context),
-              child: const _InfoRow(
-                icon: Icons.delete_outline,
-                value: 'Delete account',
-                valueColor: Colors.red,
-              ),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          )
         ),
-      ),
-    );
-  }
-
-  // ——————— Change Email dialog (as before) ———————
-  void _showChangeEmailDialog(BuildContext context) {
-    final newEmailController = TextEditingController(text: _email);
-    final newPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Change your email',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
+              _buildInfoRow(
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: _currentUser!.email,
+                onTap: () { /* Implement email change dialog */ },
               ),
-              const SizedBox(height: 12),
-              Text(
-                'You will need to verify account again after changing your email address. Please make sure it is correct.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              const SizedBox(height: 15),
+              _buildInfoRow(
+                icon: Icons.person_outline,
+                label: 'Full name',
+                value: _currentUser!.fullName,
+                onTap: () => _showEditFullNameSheet(context),
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: newEmailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'New Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      style: TextButton.styleFrom(
-                        backgroundColor: coralRed,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        setState(() => _email = newEmailController.text.trim());
-                        Navigator.of(ctx).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: greenButtonColor,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text(
-                        'Submit',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 15),
+              _buildInfoRow(
+                icon: Icons.delete_outline,
+                label: 'Delete Account',
+                value: 'All your data will be permanently removed',
+                onTap: () => _showDeleteAccountDialog(context),
+                valueColor: coralRed,
               ),
             ],
           ),
@@ -264,168 +176,48 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ——————— Delete Account dialog ———————
-  void _showDeleteAccountDialog(BuildContext context) {
-    String? reason;
-    final options = [
-      'I am no longer using my account',
-      'I don’t understand how to use',
-      'ZAPAC is not available in my city',
-      'Other',
-    ];
+  // --- Dialogs and Bottom Sheets ---
 
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: StatefulBuilder(
-            builder: (ctx2, setState2) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Delete your Account?',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: coralRed,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'We’re really sorry to see you go. Are you sure you want to delete your account? Once you confirm, your data will be gone.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // radio options
-                  ...options.map((opt) {
-                    return RadioListTile<String>(
-                      title: Text(
-                        opt,
-                        style: TextStyle(color: Colors.grey[800]),
-                      ),
-                      value: opt,
-                      groupValue: reason,
-                      activeColor: coralRed,
-                      onChanged: (val) => setState2(() => reason = val),
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }),
-
-                  const SizedBox(height: 24),
-                  // delete button
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () {
-                        // Navigator.of(ctx).pop(); // Remove this line
-                        Navigator.pushAndRemoveUntil(
-                          // Add this line
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AuthScreen(),
-                          ), // Replace LoginScreen() with your actual login page widget
-                          (Route<dynamic> route) => false,
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: coralRed,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text(
-                        'Delete Account',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ——————— Full name bottom sheet (unchanged) ———————
   void _showEditFullNameSheet(BuildContext context) async {
-    final firstCtrl = TextEditingController(text: _firstName);
-    final middleCtrl = TextEditingController(text: _middleName);
-    final lastCtrl = TextEditingController(text: _lastName);
+    // Pre-fill text fields with current user data
+    final firstCtrl = TextEditingController(text: _currentUser!.firstName);
+    final middleCtrl = TextEditingController(text: _currentUser!.middleName ?? '');
+    final lastCtrl = TextEditingController(text: _currentUser!.lastName);
 
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (sheetCtx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
-          ),
+        return Padding(
+          padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(sheetCtx).viewInsets.bottom + 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 50,
-                height: 5,
-                margin: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: orangeLineColor,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-              const Text(
-                'Edit your data',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
-              ),
+              Text("Edit Full Name", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-              _buildNameTextField(
-                controller: firstCtrl,
-                labelText: 'First name',
-              ),
+              TextField(controller: firstCtrl, decoration: InputDecoration(labelText: 'First Name')),
               const SizedBox(height: 15),
-              _buildNameTextField(
-                controller: middleCtrl,
-                labelText: 'Middle name',
-              ),
+              TextField(controller: middleCtrl, decoration: InputDecoration(labelText: 'Middle Name (Optional)')),
               const SizedBox(height: 15),
-              _buildNameTextField(controller: lastCtrl, labelText: 'Last name'),
+              TextField(controller: lastCtrl, decoration: InputDecoration(labelText: 'Last Name')),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(sheetCtx).pop({
-                    'first': firstCtrl.text.trim(),
-                    'middle': middleCtrl.text.trim(),
-                    'last': lastCtrl.text.trim(),
-                  }),
-                  style: ElevatedButton.styleFrom(
+                  onPressed: () {
+                     Navigator.of(sheetCtx).pop({
+                      'first': firstCtrl.text.trim(),
+                      'middle': middleCtrl.text.trim(),
+                      'last': lastCtrl.text.trim(),
+                    });
+                  },
+                   style: ElevatedButton.styleFrom(
                     backgroundColor: greenButtonColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('OK'),
+                  child: const Text('Save Changes', style: TextStyle(color: Colors.white)),
                 ),
               ),
             ],
@@ -434,242 +226,89 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
+    // *** THIS IS THE KEY FIX ***
     if (result != null && mounted) {
       setState(() {
-        _firstName = result['first']!;
-        _middleName = result['middle']!;
-        _lastName = result['last']!;
+        // Instead of creating a new User, we MODIFY the existing one.
+        _currentUser!.firstName = result['first']!;
+        _currentUser!.middleName = result['middle']; // Can be null
+        _currentUser!.lastName = result['last']!;
       });
-    }
-    // controllers get GC’d automatically
-  }
-
-  Widget _buildNameTextField({
-    required TextEditingController controller,
-    required String labelText,
-  }) => TextField(
-    controller: controller,
-    decoration: InputDecoration(
-      labelText: labelText,
-      filled: true,
-      fillColor: Colors.grey[100],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor),
-      ),
-    ),
-  );
-
-  // ——————— Gender sheet & Date picker (unchanged) ———————
-  void _showGenderSelectionDialog(BuildContext context) {
-    String? temp = _selectedGender;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx2, setState2) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 50,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: orangeLineColor,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-                const Text(
-                  'Please specify your gender',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                RadioListTile<String>(
-                  title: const Text('Male'),
-                  value: 'Male',
-                  groupValue: temp,
-                  activeColor: accentYellow,
-                  onChanged: (v) => setState2(() => temp = v),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                RadioListTile<String>(
-                  title: const Text('Female'),
-                  value: 'Female',
-                  groupValue: temp,
-                  activeColor: accentYellow,
-                  onChanged: (v) => setState2(() => temp = v),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(sheetCtx).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (temp != null) {
-                          setState(() => _selectedGender = temp);
-                          Navigator.of(sheetCtx).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _selectDateOfBirth(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDateOfBirth ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (ctx, child) => Theme(
-        data: ThemeData.light().copyWith(
-          primaryColor: primaryColor,
-          colorScheme: ColorScheme.light(primary: primaryColor),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null && picked != _selectedDateOfBirth) {
-      setState(() => _selectedDateOfBirth = picked);
+      // In a real app, you would now save the updated _currentUser object to your database
+      // await AuthManager().updateUser(_currentUser!);
     }
   }
-}
 
-/// Static info row (used for Delete account)
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String? label;
-  final String value;
-  final Color valueColor;
-
-  const _InfoRow({
-    required this.icon,
-    this.label,
-    required this.value,
-    this.valueColor = Colors.black,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.grey[600]),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (label != null)
-                  Text(
-                    label!,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
-                if (label != null) const SizedBox(height: 2),
-                Text(value, style: TextStyle(color: valueColor, fontSize: 16)),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
-      ],
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account?'),
+        content: const Text('This action is irreversible. All your data will be permanently lost.'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: coralRed),
+            child: const Text('Delete'),
+            onPressed: () {
+              Navigator.of(ctx).pop(); // Dismiss the dialog first
+              AuthManager().logout();
+              if (mounted) {
+                 Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const AuthScreen()),
+                    (Route<dynamic> route) => false,
+                 );
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Tappable info row (Full name, Gender, DOB)
-class _TappableInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  const _TappableInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Icon(icon, color: Colors.grey[600]),
-                const SizedBox(width: 20),
-                Column(
+// --- Reusable Info Row Widget ---
+Widget _buildInfoRow({
+  required IconData icon,
+  required String label,
+  required String value,
+  required VoidCallback onTap,
+  Color valueColor = Colors.black,
+}) {
+  return InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.grey[600], size: 28),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      label,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                    ),
+                    Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                     const SizedBox(height: 2),
                     Text(
                       value,
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      style: TextStyle(fontSize: 16, color: valueColor, fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-                const Spacer(),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey,
-                  size: 16,
-                ),
-              ],
-            ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+            ],
           ),
-        ),
-        const SizedBox(height: 15),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
-      ],
-    );
-  }
+           const SizedBox(height: 15),
+           const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+        ],
+      ),
+    ),
+  );
 }

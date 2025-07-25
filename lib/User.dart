@@ -1,12 +1,19 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-enum UserType { commuter, driver }
+// Define UserType as an enum
+enum UserType { commuter, driver, admin }
 
 class User {
-  final String email;
-  final String password;
-  final String firstName;
-  final String lastName;
+  // MODIFIED: Made fields non-final to allow editing on the profile page
+  String email;
+  String password;
+  String firstName;
+  String lastName;
+  
+  // MODIFIED: Added these two optional fields
+  String? middleName;
+  String? profileImageUrl;
+
   final UserType type;
   LatLng? currentLocation;
 
@@ -15,9 +22,17 @@ class User {
     required this.password,
     required this.firstName,
     required this.lastName,
+    this.middleName, // Added to constructor
+    this.profileImageUrl, // Added to constructor
     required this.type,
     this.currentLocation,
   });
 
-  String get fullName => '$firstName $lastName';
+  // MODIFIED: Updated getter to handle an optional middle name gracefully
+  String get fullName {
+    if (middleName != null && middleName!.isNotEmpty) {
+      return '$firstName $middleName $lastName';
+    }
+    return '$firstName $lastName';
+  }
 }
