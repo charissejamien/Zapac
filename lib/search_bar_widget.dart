@@ -4,8 +4,9 @@ import 'package:zapac/search_destination_page.dart';
 
 class SearchBar extends StatefulWidget {
   final VoidCallback? onProfileTap;
+  final Function(Map<String, dynamic>)? onPlaceSelected;
 
-  const SearchBar({super.key, this.onProfileTap});
+  const SearchBar({super.key, this.onProfileTap, this.onPlaceSelected});
 
   @override
   State<SearchBar> createState() => _SearchBarState();
@@ -21,19 +22,16 @@ class _SearchBarState extends State<SearchBar> {
   }
 
   void _openSearchPage() async {
-    // When the SearchBar is tapped, navigate to SearchDestinationPage.
-    // The initialSearchText can be empty because all typing will occur there.
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const SearchDestinationPage(
-          initialSearchText: '', // No initial text needed as typing starts on the new page
+          initialSearchText: '',
         ),
       ),
     );
-
-    if (result != null) {
-      _handleSearchResult(result);
+    if (result != null && widget.onPlaceSelected != null) {
+      widget.onPlaceSelected!(result);
     }
   }
 
@@ -74,7 +72,12 @@ class _SearchBarState extends State<SearchBar> {
                   child: TextField(
                     controller: _searchController,
                     readOnly: true, // This makes the TextField not editable directly
-                    onTap: _openSearchPage, // This will open the search page when tapped
+                    onTap: () {
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SearchDestinationPage()),
+                    );
+                    }, // This will open the search page when tapped
                     decoration: const InputDecoration(
                       hintText: 'Where to?',
                       hintStyle: TextStyle(

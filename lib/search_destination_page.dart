@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'map_utils.dart';
 
 class SearchDestinationPage extends StatefulWidget {
   final String? initialSearchText; // New parameter to receive initial text
@@ -61,14 +62,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("ZAPAC APP"),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.content_copy), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -118,7 +111,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
         return ListTile(
           leading: const Icon(Icons.location_on_outlined),
           title: Text(_predictions[index]['description']),
-          onTap: () => Navigator.pop(context, {'place': _predictions[index]}),
+         onTap: () {
+           Navigator.pop(context, {'place': _predictions[index]});
+        },
         );
       },
     );
@@ -139,7 +134,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
               return ListTile(
                 leading: const Icon(Icons.history),
                 title: Text(_recentLocations[index]['description']),
-                onTap: () => Navigator.pop(context, {'place': _recentLocations[index]}),
+                onTap: () => Navigator.pop(context, {'place': _predictions[index]}),
               );
             },
           ),
