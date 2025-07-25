@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:zapac/dashboard.dart';
 import 'reset_password_screen.dart';
+import 'package:zapac/AuthManager.dart'; 
 
 class LoginBody extends StatefulWidget {
   const LoginBody({super.key});
@@ -9,13 +10,52 @@ class LoginBody extends StatefulWidget {
   @override
   _LoginBodyState createState() => _LoginBodyState();
 }
-
 class _LoginBodyState extends State<LoginBody> {
   bool _obscurePassword = true;
   String _errorMessage = '';
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  // NEW: Create login function
+  Future<void> _handleLogin() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    setState(() {
+      _errorMessage = ''; // Clear previous error messages
+    });
+
+    if (email.isEmpty) {
+      setState(() {
+        _errorMessage = "Please enter your email address.";
+      });
+      return;
+    }
+
+    if (password.isEmpty) {
+      setState(() {
+        _errorMessage = "Please enter your password.";
+      });
+      return;
+    }
+
+    //call AuthManager para handle login
+    bool success = await AuthManager().login(email, password);
+
+    if (mounted) {
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Dashboard()),
+        );
+      } else {
+        setState(() {
+          _errorMessage = "Invalid email or password.";
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
