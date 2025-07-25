@@ -272,7 +272,7 @@ class _DashboardState extends State<Dashboard> {
             // Pass the chat messages to CommentingSection
             CommentingSection(
               chatMessages: _chatMessages,
-               onExpansionChanged: _onCommunityInsightExpansionChanged,  // Pass the list down
+              onExpansionChanged: _onCommunityInsightExpansionChanged,  // Pass the list down
             ),
 
             const Positioned(top: 12, left: 19, right: 19, child: SearchBar()),

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:zapac/commenting_section.dart'; // Assuming ChatMessage is here or create a separate models/chat_message.dart
+import 'package:zapac/AuthManager.dart';
+import 'package:zapac/commenting_section.dart'; // ChatMessage
+import 'package:zapac/User.dart';
 
-// This function will be called directly from Dashboard
 void showAddInsightModal({
   required BuildContext context,
   required ValueSetter<ChatMessage> onInsightAdded,
 }) {
+  // ① Grab the logged-in user once
+  final user = AuthManager().currentUser!;
   final TextEditingController insightController = TextEditingController();
-  final TextEditingController routeController = TextEditingController();
+  final TextEditingController routeController   = TextEditingController();
 
   showModalBottomSheet(
     context: context,
@@ -16,39 +19,38 @@ void showAddInsightModal({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (context) {
+    builder: (ctx) {
       return Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20,
-          right: 20,
-          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          left: 20, right: 20, top: 20,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ② Use user's imageUrl and fullName
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 24,
                   backgroundImage: NetworkImage(
+                    user.profileImageUrl ??
                     'https://cdn-icons-png.flaticon.com/512/100/100913.png',
                   ),
-                  backgroundColor: Colors.transparent,
                 ),
                 const SizedBox(width: 12),
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kerropi',
-                      style: TextStyle(
+                      user.firstName, // or user.fullName
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Posting publicly across ZAPAC',
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
@@ -83,18 +85,19 @@ void showAddInsightModal({
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (insightController.text.trim().isNotEmpty &&
-                      routeController.text.trim().isNotEmpty) {
+                  final text = insightController.text.trim();
+                  final route = routeController.text.trim();
+                  if (text.isNotEmpty && route.isNotEmpty) {
                     final newInsight = ChatMessage(
-                      sender: 'Kerropi',
-                      message: '“${insightController.text.trim()}”',
-                      route: routeController.text.trim(),
+                      sender: user.firstName,  // dynamic
+                      message: '“$text”',
+                      route: route,
                       timeAgo: 'Just now',
-                      imageUrl:
-                          'https://cdn-icons-png.flaticon.com/512/100/100913.png',
+                      imageUrl: user.profileImageUrl ??
+                      'https://cdn-icons-png.flaticon.com/512/100/100913.png',
                     );
-                    onInsightAdded.call(newInsight); // Call the callback
-                    Navigator.pop(context); // Close the modal
+                    onInsightAdded(newInsight);
+                    Navigator.pop(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(
