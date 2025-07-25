@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:zapac/AuthManager.dart';
 import 'package:zapac/commenting_section.dart'; // ChatMessage
@@ -6,9 +7,10 @@ import 'package:zapac/User.dart';
 void showAddInsightModal({
   required BuildContext context,
   required ValueSetter<ChatMessage> onInsightAdded,
+  File? profileImageFile,
+  String? profileImageUrl,
+  String? displayName,
 }) {
-  // ① Grab the logged-in user once
-  final user = AuthManager().currentUser!;
   final TextEditingController insightController = TextEditingController();
   final TextEditingController routeController   = TextEditingController();
 
@@ -20,6 +22,12 @@ void showAddInsightModal({
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) {
+      final ImageProvider avatarImage = profileImageFile != null
+        ? FileImage(profileImageFile)
+        : (profileImageUrl != null && profileImageUrl.isNotEmpty
+            ? NetworkImage(profileImageUrl)
+            : const NetworkImage('https://cdn-icons-png.flaticon.com/512/100/100913.png'));
+      final String nameToShow = displayName ?? 'User';
       return Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom,
@@ -34,17 +42,14 @@ void showAddInsightModal({
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundImage: NetworkImage(
-                    user.profileImageUrl ??
-                    'https://cdn-icons-png.flaticon.com/512/100/100913.png',
-                  ),
+                  backgroundImage: avatarImage,
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.firstName, // or user.fullName
+                      nameToShow,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -89,11 +94,11 @@ void showAddInsightModal({
                   final route = routeController.text.trim();
                   if (text.isNotEmpty && route.isNotEmpty) {
                     final newInsight = ChatMessage(
-                      sender: user.firstName,  // dynamic
+                      sender: nameToShow,  // dynamic
                       message: '“$text”',
                       route: route,
                       timeAgo: 'Just now',
-                      imageUrl: user.profileImageUrl ??
+                      imageUrl: profileImageUrl ??
                       'https://cdn-icons-png.flaticon.com/512/100/100913.png',
                     );
                     onInsightAdded(newInsight);

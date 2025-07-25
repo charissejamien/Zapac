@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'User.dart';
 
@@ -16,7 +19,7 @@ class AuthManager {
   int _simulationStep = 0;
   StreamSubscription? _otherUserLocationFirestoreSubscription;
 
-  // MODIFIED: Updated the user list to include all roles and fields.
+  // Hardcoded users list
   final List<User> _hardcodedUsers = [
     User(
       email: 'princess@gmail.com',
@@ -56,6 +59,7 @@ class AuthManager {
   final StreamController<LatLng> _otherUserLocationController = StreamController<LatLng>.broadcast();
   Stream<LatLng> get otherUserLocationStream => _otherUserLocationController.stream;
 
+  // Login and initialize Firebase
   Future<bool> login(String email, String password) async {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();
@@ -63,9 +67,8 @@ class AuthManager {
     for (User user in _hardcodedUsers) {
       if (user.email == email && user.password == password) {
         _currentUser = user;
-
-      print('[AuthManager] LOGIN SUCCESSFUL. Current user is now: ${_currentUser?.email}');
-
+        await loadProfilePicture();
+        print('[AuthManager] LOGIN SUCCESSFUL. Current user: ${_currentUser?.email}');
         _otherUser = _hardcodedUsers.firstWhere((u) => u.email != email, orElse: () => _hardcodedUsers.first);
         listenToOtherUserLocation();
         _startCurrentUserLocationSender();
@@ -77,15 +80,45 @@ class AuthManager {
     return false;
   }
 
+  // Update basic user fields
   Future<void> updateUser(User updatedUser) async {
     if (_currentUser == null) return;
     _currentUser = updatedUser;
-    int userIndex = _hardcodedUsers.indexWhere((user) => user.email == updatedUser.email);
-    if (userIndex != -1) {
-      _hardcodedUsers[userIndex] = updatedUser;
+    final idx = _hardcodedUsers.indexWhere((u) => u.email == updatedUser.email);
+    if (idx != -1) _hardcodedUsers[idx] = updatedUser;
+  }
+
+  /// Uploads a new profile picture to Firebase Storage,
+  /// updates Firestore and in-memory user object.
+  Future<void> updateProfilePicture(File file) async {
+    final emailKey = _currentUser!.email.replaceAll('.', '_');
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('profile_pictures')
+        .child('$emailKey.jpg');
+    await ref.putFile(file);
+    final downloadUrl = await ref.getDownloadURL();
+    _currentUser = _currentUser!..profileImageUrl = downloadUrl;
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(emailKey)
+        .set({'profileImageUrl': downloadUrl}, SetOptions(merge: true));
+  }
+
+  /// Loads the saved profile picture URL from Firestore into memory.
+  Future<void> loadProfilePicture() async {
+    final emailKey = _currentUser!.email.replaceAll('.', '_');
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(emailKey)
+        .get();
+    final url = doc.data()?['profileImageUrl'] as String?;
+    if (url != null) {
+      _currentUser = _currentUser!..profileImageUrl = url;
     }
   }
 
+  // Logout
   void logout() {
     _currentUser = null;
     _otherUser = null;
@@ -93,6 +126,7 @@ class AuthManager {
     _otherUserLocationFirestoreSubscription?.cancel();
   }
 
+  // Send location to Firestore
   Future<void> sendLocation(LatLng location) async {
     if (_currentUser != null) {
       try {
@@ -100,17 +134,18 @@ class AuthManager {
             .collection('drivers_locations')
             .doc(_currentUser!.email.replaceAll('.', '_'))
             .set({
-              'email': _currentUser!.email,
-              'latitude': location.latitude,
-              'longitude': location.longitude,
-              'timestamp': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
+          'email': _currentUser!.email,
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+          'timestamp': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       } catch (e) {
-        print('Error sending location to Firestore: $e');
+        print('Error sending location: $e');
       }
     }
   }
 
+  // Listen for other user location
   void listenToOtherUserLocation() {
     if (_otherUser != null) {
       _otherUserLocationFirestoreSubscription?.cancel();
@@ -118,23 +153,24 @@ class AuthManager {
           .collection('drivers_locations')
           .doc(_otherUser!.email.replaceAll('.', '_'))
           .snapshots()
-          .listen((snapshot) {
-            if (snapshot.exists && snapshot.data() != null) {
-              final data = snapshot.data()!;
-              final lat = data['latitude'];
-              final lng = data['longitude'];
-              if (lat != null && lng != null) {
-                final newLocation = LatLng(lat, lng);
-                _otherUser!.currentLocation = newLocation;
-                if (!_otherUserLocationController.isClosed) {
-                  _otherUserLocationController.add(newLocation);
-                }
-              }
+          .listen((snap) {
+        if (snap.exists && snap.data() != null) {
+          final data = snap.data()!;
+          final lat = data['latitude'];
+          final lng = data['longitude'];
+          if (lat != null && lng != null) {
+            final newLoc = LatLng(lat, lng);
+            _otherUser!.currentLocation = newLoc;
+            if (!_otherUserLocationController.isClosed) {
+              _otherUserLocationController.add(newLoc);
             }
-          });
+          }
+        }
+      });
     }
   }
 
+  // Simulate or get current user location
   final List<LatLng> _driverPath = [
     const LatLng(10.3155, 123.8890),
     const LatLng(10.3160, 123.8905),
@@ -150,9 +186,9 @@ class AuthManager {
         return;
       }
       try {
-        Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-        await sendLocation(LatLng(position.latitude, position.longitude));
-      } catch (e) {
+        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        await sendLocation(LatLng(pos.latitude, pos.longitude));
+      } catch (_) {
         if (_currentUser!.type == UserType.driver) {
           await sendLocation(_driverPath[_simulationStep % _driverPath.length]);
           _simulationStep++;
