@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
-import 'favorite_routes_page.dart'; // Import FavoriteRoutesPage
-
+import 'favorite_routes_page.dart'; 
+import 'settings_page.dart';
 class BottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -68,7 +68,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
             ),
           ),
           GestureDetector(
-            onTap: () => widget.onItemTapped(2),
+            onTap: (){
+              widget.onItemTapped(2);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
             child: Icon(
               Icons.menu,
               size: 30,
