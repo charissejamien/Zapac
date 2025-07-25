@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:zapac/dashboard.dart';
 import 'reset_password_screen.dart';
-import 'package:zapac/AuthManager.dart'; 
+import 'package:zapac/AuthManager.dart';
 
 class LoginBody extends StatefulWidget {
   const LoginBody({super.key});
@@ -10,6 +10,7 @@ class LoginBody extends StatefulWidget {
   @override
   _LoginBodyState createState() => _LoginBodyState();
 }
+
 class _LoginBodyState extends State<LoginBody> {
   bool _obscurePassword = true;
   String _errorMessage = '';
@@ -40,22 +41,31 @@ class _LoginBodyState extends State<LoginBody> {
       return;
     }
 
-    //call AuthManager para handle login
+    //call AuthManager to handle login
     bool success = await AuthManager().login(email, password);
 
-    if (mounted) {
-      if (success) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Dashboard()),
-        );
-      } else {
-        setState(() {
-          _errorMessage = "Invalid email or password.";
-        });
-      }
-    }
+    if (!mounted) return;
+  if (success) {
+    // show a green SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Login successful!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // wait a moment so the user sees it, then navigate
+    Future.delayed(const Duration(milliseconds: 500), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const Dashboard()),
+      );
+    });
+  } else {
+    setState(() => _errorMessage = "Invalid email or password.");
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +73,6 @@ class _LoginBodyState extends State<LoginBody> {
       padding: const EdgeInsets.all(20),
       child: ListView(
         children: [
-          //SizedBox(height: 20),
           Center(
             child: Text(
               "Welcome Back!",
@@ -129,56 +138,10 @@ class _LoginBodyState extends State<LoginBody> {
             ),
           ),
           SizedBox(height: 20),
+
+          // <— Updated to call _handleLogin()
           ElevatedButton(
-            onPressed: () {
-              final email = emailController.text.trim(); // Trim whitespace
-              final password = passwordController.text;
-
-              setState(() {
-                _errorMessage = ''; // Clear previous error messages
-              });
-
-              if (email.isEmpty) { // Check if email is empty
-                setState(() {
-                  _errorMessage = "Please enter your email address.";
-                });
-                return; // Stop execution if email is empty
-              }
-
-              if (password.isEmpty) { // Check if password is empty
-                setState(() {
-                  _errorMessage = "Please enter your password.";
-                });
-                return; // Stop execution if password is empty
-              }
-
-              // Your existing authentication logic
-              if (email == "zoie@gmail.com" && password == "batman") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Dashboard()),
-                );
-              } else if (email == "princess@gmail.com" &&
-                  password == "superman") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Dashboard()),
-                );
-              } else {
-                if (email != "zoie@gmail.com" &&
-                    email != "princess@gmail.com") {
-                  setState(() {
-                    _errorMessage = "The email address you entered is incorrect.";
-                  });
-                } else if ((email == "zoie@gmail.com" &&
-                        password != "batman") ||
-                    (email == "princess@gmail.com" && password != "superman")) {
-                  setState(() {
-                    _errorMessage = "The password you entered is incorrect.";
-                  });
-                }
-              }
-            },
+            onPressed: _handleLogin,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF6CA89A),
               padding: EdgeInsets.symmetric(vertical: 15),
@@ -195,6 +158,7 @@ class _LoginBodyState extends State<LoginBody> {
               ),
             ),
           ),
+
           SizedBox(height: 30),
           Center(
             child: RichText(
