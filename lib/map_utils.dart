@@ -192,3 +192,14 @@ void clearRoute(Set<Polyline> polylines, Set<Marker> markers) {
   polylines.clear();
   markers.removeWhere((marker) => marker.markerId.value == 'destination_marker');
 }
+
+Future<LatLng> getLatLngFromPlaceId(String placeId) async {
+  // Use Google Places Details API to get lat/lng from place_id
+  final apiKey = 'YOUR_GOOGLE_API_KEY';
+  final url =
+      'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
+  final response = await http.get(Uri.parse(url));
+  final data = json.decode(response.body);
+  final location = data['result']['geometry']['location'];
+  return LatLng(location['lat'], location['lng']);
+}
