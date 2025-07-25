@@ -1,19 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:zapac/profile_page.dart';
+import 'package:zapac/search_destination_page.dart';
 
 class SearchBar extends StatefulWidget {
   final VoidCallback? onProfileTap;
+
   const SearchBar({super.key, this.onProfileTap});
+
   @override
   State<SearchBar> createState() => _SearchBarState();
 }
 
 class _SearchBarState extends State<SearchBar> {
   final TextEditingController _searchController = TextEditingController();
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _openSearchPage() async {
+    // When the SearchBar is tapped, navigate to SearchDestinationPage.
+    // The initialSearchText can be empty because all typing will occur there.
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SearchDestinationPage(
+          initialSearchText: '', // No initial text needed as typing starts on the new page
+        ),
+      ),
+    );
+
+    if (result != null) {
+      _handleSearchResult(result);
+    }
+  }
+
+  void _handleSearchResult(Map<String, dynamic> result) {
+    if (result.containsKey('place')) {
+      print('Selected place: ${result['place']['description']}');
+      _searchController.text = result['place']['description']; // Display selected place
+    } else if (result.containsKey('route')) {
+      print('Selected route: ${result['route'].routeName}');
+      _searchController.text = result['route'].routeName; // Display selected route
+    }
   }
 
   @override
@@ -39,8 +70,11 @@ class _SearchBarState extends State<SearchBar> {
                 const Icon(Icons.search, color: Color(0xFF6CA89A)),
                 const SizedBox(width: 8),
                 Expanded(
+                  // Use TextField with readOnly: true and onTap to trigger navigation
                   child: TextField(
                     controller: _searchController,
+                    readOnly: true, // This makes the TextField not editable directly
+                    onTap: _openSearchPage, // This will open the search page when tapped
                     decoration: const InputDecoration(
                       hintText: 'Where to?',
                       hintStyle: TextStyle(
@@ -57,8 +91,6 @@ class _SearchBarState extends State<SearchBar> {
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                     ),
-                    onSubmitted: (value) =>
-                        print('Search query submitted: $value'),
                   ),
                 ),
               ],

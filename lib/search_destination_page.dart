@@ -4,7 +4,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class SearchDestinationPage extends StatefulWidget {
-  const SearchDestinationPage({super.key});
+  final String? initialSearchText; // New parameter to receive initial text
+
+  const SearchDestinationPage({super.key, this.initialSearchText}); // Update constructor
 
   @override
   _SearchDestinationPageState createState() => _SearchDestinationPageState();
@@ -14,7 +16,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   final String apiKey = "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc";
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> _predictions = [];
-  
+
   // Placeholder for recent locations
   final List<Map<String, dynamic>> _recentLocations = [
     {'description': 'House ni Gorgeous', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
@@ -26,9 +28,20 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
     {'description': 'Ayala Malls Central Bloc', 'place_id': 'ChIJ-c52xgtwqTMR_F098xGvXD4'},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSearchText != null) {
+      _searchController.text = widget.initialSearchText!; // Set initial text
+      _getPredictions(widget.initialSearchText!); // Trigger predictions for initial text
+    }
+  }
+
   Future<void> _getPredictions(String input) async {
-    // ... (same prediction logic as before)
-    if (input.isEmpty) { setState(() => _predictions = []); return; }
+    if (input.isEmpty) {
+      setState(() => _predictions = []);
+      return;
+    }
     const location = "10.3157,123.8854";
     const radius = "30000";
     const components = "country:ph";
@@ -37,6 +50,12 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
     if (response.statusCode == 200 && mounted) {
       setState(() => _predictions = json.decode(response.body)['predictions']);
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,7 +75,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
-              onChanged: _getPredictions,
+              onChanged: _getPredictions, // This will now correctly trigger predictions
+              autofocus: true, // Automatically focus the TextField when the page opens
               decoration: InputDecoration(
                 hintText: 'Where to?',
                 prefixIcon: const Icon(Icons.search),
