@@ -9,6 +9,7 @@ import 'dart:async';
 import 'floating_button.dart'; // Your new FloatingButton widget
 import 'add_insight_modal.dart'; // Your new Add Insight Modal
 import 'search_bar_widget.dart';
+import 'map_utils.dart';
 
 // Import ChatMessage if it's moved to a separate file, otherwise it's still in commenting_section.dart
 import 'commenting_section.dart' show ChatMessage; // Only import ChatMessage from here
@@ -23,6 +24,7 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {}; // <-- Add this line
 
   final LatLng _initialCameraPosition = const LatLng(
     10.314481680817886,
@@ -215,6 +217,8 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  
+
   void _onCommunityInsightExpansionChanged(bool isExpanded) {
     if (mounted) { // ADDED mounted check
       setState(() {
@@ -264,6 +268,7 @@ class _DashboardState extends State<Dashboard> {
                   zoom: 14.0,
                 ),
                 markers: _markers,
+                polylines: _polylines,
                 myLocationEnabled: true,
                 myLocationButtonEnabled: false,
               ),
@@ -275,7 +280,20 @@ class _DashboardState extends State<Dashboard> {
               onExpansionChanged: _onCommunityInsightExpansionChanged,  // Pass the list down
             ),
 
-            const Positioned(top: 12, left: 19, right: 19, child: SearchBar()),
+            SearchBar(
+                onPlaceSelected: (item) async {
+                  print('Calling showRoute with: $item');
+                  await showRoute(
+                    item: item,
+                    apiKey: "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc",
+                    markers: _markers,
+                    polylines: _polylines,
+                    mapController: _mapController,
+                    context: context,
+                  );
+                  setState(() {});
+          },
+        ),
           ],
         ),
       ),

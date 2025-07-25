@@ -123,8 +123,26 @@ Future<Map<String, dynamic>> showRoute({
         return {};
       }
     }
-    Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    LatLng originLatLng = LatLng(currentPosition.latitude, currentPosition.longitude);
+
+    // --- FIX: Add try-catch for getting current location ---
+    LatLng? originLatLng;
+    try {
+      Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      originLatLng = LatLng(currentPosition.latitude, currentPosition.longitude);
+    } catch (e) {
+      print('Error getting current location for routing: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not get your current location for routing. Please ensure GPS is on.')),
+      );
+      return {}; // Return empty if current location cannot be obtained
+    }
+
+    if (originLatLng == null) {
+      return {};
+    }
+    // --- END FIX ---
+
+    markers.clear();
     markers.add(
       Marker(
         markerId: const MarkerId('destination_marker'),
@@ -133,6 +151,17 @@ Future<Map<String, dynamic>> showRoute({
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
       ),
     );
+    // --- FIX: Add a marker for the current location ---
+    markers.add(
+      Marker(
+        markerId: const MarkerId('current_location_marker'),
+        position: originLatLng,
+        infoWindow: const InfoWindow(title: 'Your Current Location'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      ),
+    );
+    // --- END FIX ---
+
     if (originLatLng.latitude == destinationLatLng.latitude && originLatLng.longitude == destinationLatLng.longitude) {
       mapController.animateCamera(CameraUpdate.newLatLngZoom(originLatLng, 15.0));
     } else {
@@ -157,6 +186,7 @@ Future<Map<String, dynamic>> showRoute({
       ),
       googleApiKey: apiKey,
     );
+    polylines.clear();
     if (result.points.isNotEmpty) {
       List<LatLng> polylineCoordinates = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
       polylines.add(
@@ -191,11 +221,12 @@ Future<Map<String, dynamic>> showRoute({
 void clearRoute(Set<Polyline> polylines, Set<Marker> markers) {
   polylines.clear();
   markers.removeWhere((marker) => marker.markerId.value == 'destination_marker');
+  markers.removeWhere((marker) => marker.markerId.value == 'current_location_marker'); // Clear current location marker too
 }
 
 Future<LatLng> getLatLngFromPlaceId(String placeId) async {
   // Use Google Places Details API to get lat/lng from place_id
-  final apiKey = 'YOUR_GOOGLE_API_KEY';
+  final apiKey = 'AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc';
   final url =
       'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
   final response = await http.get(Uri.parse(url));

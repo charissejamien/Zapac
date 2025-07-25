@@ -111,17 +111,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
         return ListTile(
           leading: const Icon(Icons.location_on_outlined),
           title: Text(_predictions[index]['description']),
-         onTap: () async {
-          // 1. Get current location
-          Position pos = await _getCurrentLocation();
-          // 2. Get destination place_id
-          String placeId = _predictions[index]['place_id'];
-          // 3. Fetch destination coordinates (implement this in map_utils.dart)
-          LatLng destLatLng = await getLatLngFromPlaceId(placeId);
-          // 4. Show route on map (implement this in map_utils.dart)
-          await showRoute(item: item, apiKey: apiKey, markers: markers, polylines: polylines, mapController: mapController, context: context);
-          // 5. Pop and return the selected place if needed
-          Navigator.pop(context, {'place': _predictions[index]});
+         onTap: () {
+           Navigator.pop(context, {'place': _predictions[index]});
         },
         );
       },
