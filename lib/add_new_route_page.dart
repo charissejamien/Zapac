@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:zapac/models/favorite_route.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
+import 'dart:math' show max; // Import max for calculations, ceil for rounding if needed later
 
 class AddNewRoutePage extends StatefulWidget {
   const AddNewRoutePage({super.key});
@@ -140,6 +141,29 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     }
   }
 
+  // New function to calculate estimated fare based on distance
+  String _calculateEstimatedFare(String distanceText) {
+    // Extract numerical value from distance string (e.g., "5.2 km")
+    double distanceKm;
+    try {
+      // Remove " km" and any commas, then parse to double
+      distanceKm = double.parse(distanceText.replaceAll(' km', '').replaceAll(',', ''));
+    } catch (e) {
+      print('Error parsing distance: $e');
+      return 'Fare N/A'; // Return placeholder if parsing fails
+    }
+
+    double fare;
+    if (distanceKm <= 1.0) {
+      fare = distanceKm * 30; // Short-distance logic: ₱30 per km
+    } else {
+      fare = 23.20 + (distanceKm * 9.12); // Standard fare logic: ₱23.20 base + ₱9.12 per km
+    }
+
+    // Format the fare to two decimal places and add currency symbol
+    return '₱${fare.toStringAsFixed(2)}';
+  }
+
  void _saveRoute() {
     if (_routeNameController.text.isEmpty || _directionsResponse == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,6 +178,9 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     final startLocation = leg['start_location'];
     final endLocation = leg['end_location'];
 
+    // Calculate the estimated fare using the new function
+    final String calculatedFare = _calculateEstimatedFare(leg['distance']['text']);
+
     final newRoute = FavoriteRoute(
       routeName: _routeNameController.text,
       startAddress: leg['start_address'],
@@ -167,7 +194,7 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       startLatitude: startLocation['lat'],
       startLongitude: startLocation['lng'],
       polylineEncoded: routeData['overview_polyline']['points'],
-      estimatedFare: 'N/A', // <--- Added estimatedFare with a placeholder value
+      estimatedFare: calculatedFare, // <--- Use the calculated fare here
     );
 
     favoriteRoutes.add(newRoute);
