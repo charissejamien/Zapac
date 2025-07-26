@@ -1,3 +1,5 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -59,9 +61,9 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
-            primaryColor: Colors.blueGrey[900], // Example dark primary color
+            primaryColor: const Color(0xFF273238), // Changed to #273238 for primary color
             // Define other dark mode colors
-            appBarTheme: AppBarTheme(color: Colors.grey[900]),
+            appBarTheme: AppBarTheme(color: Colors.grey[900]), // This affects AppBar widgets, not the profile page header container
             scaffoldBackgroundColor: Colors.grey[850],
             cardColor: Colors.grey[800],
             // Add more dark theme specific colors and styles as needed

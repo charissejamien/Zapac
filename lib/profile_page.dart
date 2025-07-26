@@ -1,3 +1,5 @@
+// lib/profile_page.dart
+
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
@@ -22,10 +24,11 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _profileImageFile;
   final ImagePicker _imagePicker = ImagePicker();
 
-  static const Color primaryColor = Color(0xFF4A6FA5);
-  static const Color contentBgColor = Colors.white;
-  static const Color deleteColor = Color(0xFFE97C7C);
-  static const Color accentColor = Color(0xFF6CA89A);
+  // Remove these hardcoded color constants:
+  // static const Color primaryColor = Color(0xFF4A6FA5);
+  // static const Color contentBgColor = Colors.white;
+  // static const Color deleteColor = Color(0xFFE97C7C);
+  // static const Color accentColor = Color(0xFF6CA89A);
 
   @override
   void initState() {
@@ -58,9 +61,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme; // Get the current ColorScheme
+
     return Scaffold(
-      backgroundColor: primaryColor,
-      body: SafeArea(child: _buildBody()),
+      backgroundColor: colorScheme.background, // Use theme background color
+      body: SafeArea(child: _buildBody(colorScheme)), // Pass colorScheme to _buildBody
       bottomNavigationBar: BottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
@@ -68,16 +73,16 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ColorScheme colorScheme) { // Accept colorScheme as parameter
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: Colors.white));
+      return Center(
+          child: CircularProgressIndicator(color: colorScheme.onBackground)); // Use theme color for indicator
     }
     if (_currentUser == null) {
       return Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Text("User not logged in.",
-              style: TextStyle(color: Colors.white)),
+          Text("User not logged in.",
+              style: TextStyle(color: colorScheme.onBackground)), // Use theme color for text
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () => Navigator.of(context)
@@ -93,13 +98,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Column(
       children: [
-        _buildHeader(),
-        _buildInfoSection(),
+        _buildHeader(colorScheme), // Pass colorScheme
+        _buildInfoSection(colorScheme), // Pass colorScheme
       ],
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme colorScheme) { // Accept colorScheme as parameter
     ImageProvider<Object> avatar = _profileImageFile != null
         ? FileImage(_profileImageFile!)
         : (_currentUser!.profileImageUrl?.isNotEmpty == true
@@ -107,7 +112,7 @@ class _ProfilePageState extends State<ProfilePage> {
             : const AssetImage('assets/logo.png')); // use your existing placeholder
     return Container(
       width: double.infinity,
-      color: primaryColor,
+      color: colorScheme.primary, // Use theme primary color for header background
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       child: Column(children: [
         Row(
@@ -116,15 +121,15 @@ class _ProfilePageState extends State<ProfilePage> {
             Flexible(
               child: Text(
                 _currentUser!.email,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: colorScheme.onPrimary, fontSize: 14), // Use onPrimary for text on primary background
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 6),
             GestureDetector(
-              onTap: () => _showEditEmailDialog(context),
-              child: const Icon(Icons.edit,
-                  color: Colors.white, size: 18),
+              onTap: () => _showEditEmailDialog(context, colorScheme), // Pass colorScheme
+              child: Icon(Icons.edit,
+                  color: colorScheme.onPrimary, size: 18), // Use onPrimary for icon on primary background
             ),
           ],
         ),
@@ -133,15 +138,15 @@ class _ProfilePageState extends State<ProfilePage> {
           onTap: _onProfilePicTap,
           child: CircleAvatar(
             radius: 52,
-            backgroundColor: Colors.white,
+            backgroundColor: colorScheme.surface, // Use theme surface for avatar background
             backgroundImage: avatar,
           ),
         ),
         const SizedBox(height: 12),
         Text(
           _currentUser!.fullName,
-          style: const TextStyle(
-              color: Colors.white,
+          style: TextStyle(
+              color: colorScheme.onPrimary, // Use onPrimary for text on primary background
               fontSize: 22,
               fontWeight: FontWeight.bold),
         ),
@@ -149,20 +154,20 @@ class _ProfilePageState extends State<ProfilePage> {
         Text(
           'Daily Commuter',
           style: TextStyle(
-              color: Colors.white.withOpacity(0.8), fontSize: 14),
+              color: colorScheme.onPrimary.withOpacity(0.8), fontSize: 14), // Use onPrimary for text
         ),
       ]),
     );
   }
 
-  Widget _buildInfoSection() {
+  Widget _buildInfoSection(ColorScheme colorScheme) { // Accept colorScheme as parameter
     return Expanded(
       child: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: contentBgColor,
+        decoration: BoxDecoration(
+          color: colorScheme.surface, // Use theme surface color for content background
           borderRadius:
-              BorderRadius.vertical(top: Radius.circular(28)),
+              const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding:
             const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -172,30 +177,33 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: Icons.person_outline,
               label: 'Full name',
               value: _currentUser!.fullName,
-              onTap: () => _showEditFullNameSheet(context),
+              valueColor: colorScheme.onSurface, // Text color on surface
+              onTap: () => _showEditFullNameSheet(context, colorScheme), // Pass colorScheme
             ),
-            const Divider(),
+            Divider(color: colorScheme.outlineVariant), // Use theme divider color
             _infoRow(
               icon: Icons.transgender,
               label: 'Gender',
               value: _currentUser!.gender ?? 'Not provided',
-              onTap: () => _showEditGenderSheet(context),
+              valueColor: colorScheme.onSurface, // Text color on surface
+              onTap: () => _showEditGenderSheet(context, colorScheme), // Pass colorScheme
             ),
-            const Divider(),
+            Divider(color: colorScheme.outlineVariant), // Use theme divider color
             _infoRow(
               icon: Icons.cake_outlined,
               label: 'Date of Birth',
               value: _currentUser!.dateOfBirth ?? 'Not provided',
-              onTap: () => _showEditDOBDialog(context),
+              valueColor: colorScheme.onSurface, // Text color on surface
+              onTap: () => _showEditDOBDialog(context, colorScheme), // Pass colorScheme
             ),
-            const Divider(),
+            Divider(color: colorScheme.outlineVariant), // Use theme divider color
             _infoRow(
               icon: Icons.delete_outline,
               label: 'Delete account',
               value:
                   'All your data will be permanently removed',
-              valueColor: deleteColor,
-              onTap: () => _confirmDeleteAccount(),
+              valueColor: colorScheme.error, // Use theme error color
+              onTap: () => _confirmDeleteAccount(colorScheme), // Pass colorScheme
             ),
           ],
         ),
@@ -207,50 +215,56 @@ class _ProfilePageState extends State<ProfilePage> {
     required IconData icon,
     required String label,
     required String value,
-    Color valueColor = Colors.black,
+    Color? valueColor, // Make valueColor nullable if it might not be provided
     required VoidCallback onTap,
-  }) =>
-      InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.grey[600], size: 24),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(label,
-                          style: TextStyle(
-                              color: Colors.grey[500], fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text(value,
-                          style: TextStyle(
-                              fontSize: 16, color: valueColor)),
-                    ]),
-              ),
-              const Icon(Icons.arrow_forward_ios,
-                  color: Colors.grey, size: 16),
-            ],
-          ),
+  }) {
+    // Default valueColor if not provided
+    valueColor = valueColor ?? Theme.of(context).colorScheme.onSurface;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 24), // Use theme color for icons
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)), // Use theme color for label
+                    const SizedBox(height: 4),
+                    Text(value,
+                        style: TextStyle(
+                            fontSize: 14, color: valueColor)),
+                  ]),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                color: Theme.of(context).colorScheme.onSurfaceVariant, size: 16), // Use theme color for arrow icon
+          ],
         ),
-      );
+      ),
+    );
+  }
+
 
   Future<void> _onProfilePicTap() async {
     final should = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        content: const Text("Do you want to change your profile pic?"),
+        backgroundColor: Theme.of(ctx).colorScheme.surface, // Use theme surface color
+        content: Text("Do you want to change your profile pic?", style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)), // Use onSurface for text
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text("Cancel")),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(ctx).colorScheme.primary))), // Use primary color for text button
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text("Yes"),
+            child: Text("Yes", style: TextStyle(color: Theme.of(ctx).colorScheme.primary)), // Use primary color for text button
           ),
         ],
       ),
@@ -271,47 +285,58 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
 
-  Future<void> _showEditEmailDialog(BuildContext context) async {
+  Future<void> _showEditEmailDialog(BuildContext context, ColorScheme colorScheme) async { // Accept colorScheme
     final emailCtrl =
         TextEditingController(text: _currentUser!.email);
     final passwordCtrl = TextEditingController();
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Change your email",
+        backgroundColor: colorScheme.surface, // Use theme surface color
+        title: Text("Change your email",
             style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)), // Use onSurface for title
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
                 "You will need to verify your account again after changing your email address. Please make sure it is correct.",
-                style: TextStyle(fontSize: 12)),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)), // Use onSurfaceVariant for text
             const SizedBox(height: 12),
             TextField(
               controller: emailCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                   labelText: "New Email",
-                  border: OutlineInputBorder()),
+                  labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
+                  border: const OutlineInputBorder(),
+                  fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
+                  filled: true,
+              ),
+              style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
             ),
             const SizedBox(height: 12),
             TextField(
               controller: passwordCtrl,
               obscureText: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                   labelText: "Password",
-                  border: OutlineInputBorder()),
+                  labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
+                  border: const OutlineInputBorder(),
+                  fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
+                  filled: true,
+              ),
+              style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
             ),
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text("Cancel")),
+              child: Text("Cancel", style: TextStyle(color: colorScheme.primary))), // Use primary color for text button
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white),
+                backgroundColor: colorScheme.primary, // Use theme primary color
+                foregroundColor: colorScheme.onPrimary), // Use onPrimary for text color
             onPressed: () async {
               final newEmail = emailCtrl.text.trim();
               final newPassword = passwordCtrl.text;
@@ -339,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _showEditFullNameSheet(
-          BuildContext context) async {
+          BuildContext context, ColorScheme colorScheme) async { // Accept colorScheme
     final firstCtrl =
         TextEditingController(text: _currentUser!.firstName);
     final middleCtrl =
@@ -356,9 +381,9 @@ class _ProfilePageState extends State<ProfilePage> {
             bottom:
                 MediaQuery.of(sheetCtx).viewInsets.bottom),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
+          decoration: BoxDecoration(
+            color: colorScheme.surface, // Use theme surface color
+            borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20)),
           ),
           padding:
@@ -370,36 +395,55 @@ class _ProfilePageState extends State<ProfilePage> {
                   width: 40,
                   height: 5,
                   decoration: BoxDecoration(
-                      color: accentColor,
+                      color: colorScheme.secondary, // Use theme secondary color
                       borderRadius:
                           BorderRadius.circular(10))),
               const SizedBox(height: 16),
-              const Text("Edit your data",
+              Text("Edit your data",
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16)),
+                      fontSize: 16,
+                      color: colorScheme.onSurface)), // Use onSurface for text
               const SizedBox(height: 16),
               TextField(
                   controller: firstCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: "First name",
-                      border: OutlineInputBorder())),
+                      labelStyle: TextStyle(color: colorScheme.onSurface),
+                      border: const OutlineInputBorder(),
+                      fillColor: colorScheme.surfaceContainerHighest,
+                      filled: true,
+                  ),
+                  style: TextStyle(color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 12),
               TextField(
                   controller: lastCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: "Last name",
-                      border: OutlineInputBorder())),
+                      labelStyle: TextStyle(color: colorScheme.onSurface),
+                      border: const OutlineInputBorder(),
+                      fillColor: colorScheme.surfaceContainerHighest,
+                      filled: true,
+                  ),
+                  style: TextStyle(color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 12),
               TextField(
                   controller: middleCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: "Middle name",
-                      border: OutlineInputBorder())),
+                      labelStyle: TextStyle(color: colorScheme.onSurface),
+                      border: const OutlineInputBorder(),
+                      fillColor: colorScheme.surfaceContainerHighest,
+                      filled: true,
+                  ),
+                  style: TextStyle(color: colorScheme.onSurface),
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
+                    backgroundColor: colorScheme.primary, // Use theme primary color
                     minimumSize:
                         const Size(double.infinity, 48)),
                 onPressed: () =>
@@ -408,10 +452,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   'middle': middleCtrl.text.trim(),
                   'last': lastCtrl.text.trim(),
                 }),
-                child: const Text("OK",
+                child: Text("OK",
                     style:
-                        TextStyle(color: Colors.white)),
-              ),  
+                        TextStyle(color: colorScheme.onPrimary)), // Use onPrimary for text
+              ),
             ],
           ),
         ),
@@ -428,7 +472,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _showEditGenderSheet(BuildContext context) async {
+  Future<void> _showEditGenderSheet(BuildContext context, ColorScheme colorScheme) async { // Accept colorScheme
     String? choice = _currentUser!.gender;
     final result = await showModalBottomSheet<String>(
       context: context,
@@ -437,35 +481,35 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (ctx2, setSB) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            decoration: BoxDecoration(
+              color: colorScheme.surface, // Use theme surface color
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 40, height: 5, decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(10))),
+              Container(width: 40, height: 5, decoration: BoxDecoration(color: colorScheme.secondary, borderRadius: BorderRadius.circular(10))), // Use theme secondary
               const SizedBox(height: 16),
-              const Text("Please specify your gender", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text("Please specify your gender", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface)), // Use onSurface
               const SizedBox(height: 8),
               RadioListTile<String>(
-                title: const Text("Male"),
+                title: Text("Male", style: TextStyle(color: colorScheme.onSurface)), // Use onSurface
                 value: "Male",
                 groupValue: choice,
-                activeColor: primaryColor,
+                activeColor: colorScheme.primary, // Use theme primary
                 onChanged: (v) => setSB(() => choice = v),
               ),
               RadioListTile<String>(
-                title: const Text("Female"),
+                title: Text("Female", style: TextStyle(color: colorScheme.onSurface)), // Use onSurface
                 value: "Female",
                 groupValue: choice,
-                activeColor: primaryColor,
+                activeColor: colorScheme.primary, // Use theme primary
                 onChanged: (v) => setSB(() => choice = v),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: accentColor, minimumSize: const Size(double.infinity, 48)),
+                style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, minimumSize: const Size(double.infinity, 48)), // Use theme primary
                 onPressed: () => Navigator.of(sheetCtx).pop(choice),
-                child: const Text("OK", style: TextStyle(color: Colors.white)),
+                child: Text("OK", style: TextStyle(color: colorScheme.onPrimary)), // Use onPrimary
               ),
             ]),
           ),
@@ -481,13 +525,23 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _showEditDOBDialog(BuildContext context) async {
+  Future<void> _showEditDOBDialog(BuildContext context, ColorScheme colorScheme) async { // Accept colorScheme
     DateTime initial = DateTime.tryParse(_currentUser!.dateOfBirth ?? '') ?? DateTime(2000);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (ctx, child) {
+        return Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme: colorScheme, // Pass the current colorScheme to DatePicker
+            // You might need to adjust other date picker specific colors here if necessary
+            // e.g., textTheme for header, etc.
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && mounted) {
       final dobStr = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
@@ -498,7 +552,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _confirmDeleteAccount() async {
+  Future<void> _confirmDeleteAccount(ColorScheme colorScheme) async { // Accept colorScheme
     String? reason;
     final reasons = [
       "I am no longer using my account",
@@ -510,24 +564,26 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setSB) => AlertDialog(
-          title: const Text("Delete your Account?", style: TextStyle(color: deleteColor, fontSize: 18, fontWeight: FontWeight.bold)),
+          backgroundColor: colorScheme.surface, // Use theme surface color
+          title: Text("Delete your Account?", style: TextStyle(color: colorScheme.error, fontSize: 18, fontWeight: FontWeight.bold)), // Use theme error color
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text(
+            Text(
               "We’re really sorry to see you go. Are you sure you want to delete your account? Once you confirm, your data will be gone.",
-              style: TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant), // Use onSurfaceVariant
             ),
             const SizedBox(height: 12),
             ...reasons.map((r) => RadioListTile<String>(
-                  title: Text(r, style: const TextStyle(fontSize: 13)),
+                  title: Text(r, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)), // Use onSurface
                   value: r,
                   groupValue: reason,
                   onChanged: (v) => setSB(() => reason = v),
+                  activeColor: colorScheme.primary, // Use theme primary
                 )),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text("Cancel")),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text("Cancel", style: TextStyle(color: colorScheme.primary))), // Use primary
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: deleteColor),
+              style: TextButton.styleFrom(foregroundColor: colorScheme.error), // Use theme error
               onPressed: () {
                 AuthManager().logout();
                 Navigator.of(context).pushAndRemoveUntil(
