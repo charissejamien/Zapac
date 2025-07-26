@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
-import 'favorite_routes_page.dart'; 
+import 'favorite_routes_page.dart';
 import 'settings_page.dart';
+
 class BottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -19,13 +20,22 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
+    // Determine colors based on the current theme brightness
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Define colors for both modes or use Theme.of(context) directly
+    final Color navBarColor = isDarkMode ? Colors.grey[900]! : const Color(0xFF4A6FA5);
+    final Color iconColor = isDarkMode ? Colors.white70 : Colors.white;
+    final Color selectedIconColor = isDarkMode ? Colors.tealAccent[100]! : Colors.tealAccent[100]!;
+
+
     return Container(
       height: 88,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: const BoxDecoration(
-        color: Color(0xFF4A6FA5),
-        boxShadow: [BoxShadow(blurRadius: 4, offset: Offset(0, 4))],
+      decoration: BoxDecoration(
+        color: navBarColor, // Use theme-dependent color
+        boxShadow: [BoxShadow(blurRadius: 4, offset: Offset(0, 4), color: isDarkMode ? Colors.black54 : Colors.black26)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -33,8 +43,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
           GestureDetector(
             onTap: () {
               widget.onItemTapped(0);
-              // Example navigation back to Dashboard
-              // Only navigate if not already on the dashboard to prevent unnecessary pushes
               if (ModalRoute.of(context)?.settings.name != '/') {
                 Navigator.pushReplacement(
                   context,
@@ -46,14 +54,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
               Icons.home,
               size: 30,
               color: widget.selectedIndex == 0
-                  ? Colors.tealAccent[100]
-                  : Colors.white,
+                  ? selectedIconColor
+                  : iconColor, // Use theme-dependent icon color
             ),
           ),
           GestureDetector(
             onTap: () {
               widget.onItemTapped(1);
-              // Navigate to FavoriteRoutesPage when bookmark icon is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
@@ -63,8 +70,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
               Icons.bookmark,
               size: 30,
               color: widget.selectedIndex == 1
-                  ? Colors.tealAccent[100]
-                  : Colors.white,
+                  ? selectedIconColor
+                  : iconColor, // Use theme-dependent icon color
             ),
           ),
           GestureDetector(
@@ -79,8 +86,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
               Icons.menu,
               size: 30,
               color: widget.selectedIndex == 2
-                  ? Colors.tealAccent[100]
-                  : Colors.white,
+                  ? selectedIconColor
+                  : iconColor, // Use theme-dependent icon color
             ),
           ),
         ],

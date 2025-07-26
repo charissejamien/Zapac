@@ -4,6 +4,10 @@ import 'package:zapac/dashboard.dart';
 import 'package:zapac/favorite_routes_page.dart';
 import 'package:zapac/profile_page.dart'; 
 
+// lib/settings_page.dart
+// ... (imports remain the same)
+import 'main.dart'; // Import main.dart to access themeNotifier
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -12,25 +16,34 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // State for Dark Mode toggle
-  bool _isDarkMode = false; // You would link this to actual theme management
+  // No longer needs a local _isDarkMode state, as it will read from themeNotifier
+  // bool _isDarkMode = false; // You can remove this line
 
   // User details (replace with actual user data from your AuthManager or a user model)
   final String _userEmail = 'kerropiandcinnamon@gmail.com';
   final String _userName = 'Kerropi';
   final String _userStatus = 'Daily Commuter';
-  final String _userProfileImageUrl = 'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg'; // Placeholder image
+  final String _userProfileImageUrl = 'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg';
 
-  // Define your colors based on existing themes in your project
-  static const Color primaryColor = Color(0xFF4A6FA5); // Found in other files
-  static const Color greenButtonColor = Color(0xFF6CA89A); // Found in other files
+  static const Color primaryColor = Color(0xFF4A6FA5);
+  static const Color greenButtonColor = Color(0xFF6CA89A);
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the switch value based on the current theme mode
+    // _isDarkMode = themeNotifier.themeMode == ThemeMode.dark; // This line can be removed if directly using themeNotifier.themeMode.
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Read the current theme mode from the notifier
+    final isDarkMode = themeNotifier.themeMode == ThemeMode.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white, // Background for the settings page
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme colors
       appBar: AppBar(
-        backgroundColor: primaryColor, // Consistent with your app bar color
+        backgroundColor: Theme.of(context).primaryColor, // Use theme colors
         elevation: 0,
         title: const Text('Settings', style: TextStyle(color: Colors.white)),
         centerTitle: true,
@@ -40,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
           // Header section (user profile)
           Container(
             width: double.infinity,
-            color: primaryColor,
+            color: Theme.of(context).primaryColor, // Use theme colors
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Column(
               children: [
@@ -75,8 +88,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 // Edit Profile Button
                 ElevatedButton(
                   onPressed: () {
-                    // Navigate to profile editing page or show a dialog
-                    // For now, let's navigate to the existing ProfilePage
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const ProfilePage()),
@@ -103,12 +114,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildSettingsTile(
                   title: 'Dark Mode',
                   trailing: Switch(
-                    value: _isDarkMode,
+                    value: isDarkMode, // Use the actual theme mode
                     onChanged: (value) {
-                      setState(() {
-                        _isDarkMode = value;
-                        // Implement your theme switching logic here
-                      });
+                      themeNotifier.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                      // No need for setState here if themeNotifier rebuilds the MaterialApp
                     },
                     activeColor: greenButtonColor,
                   ),
@@ -116,22 +125,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildSettingsTile(
                   title: 'Share our app',
                   onTap: () {
-                    // Implement share functionality
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Share app functionality coming soon!')),
                     );
                   },
                 ),
-                // Add more settings options as needed
               ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: 2, // Highlight the menu icon
+        selectedIndex: 2,
         onItemTapped: (index) {
-          // Handle navigation from bottom bar if needed, or keep it simple.
           if (index == 0) {
             Navigator.pushReplacement(
               context,
@@ -143,7 +149,6 @@ class _SettingsPageState extends State<SettingsPage> {
               MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
             );
           }
-          // No action needed if index is 2 (SettingsPage) as we are already here.
         },
       ),
     );
@@ -159,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ListTile(
           title: Text(
             title,
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color), // Use theme text color
           ),
           trailing: trailing,
           onTap: onTap,
