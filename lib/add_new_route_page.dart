@@ -1,3 +1,5 @@
+// lib/add_new_route_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -16,7 +18,6 @@ class AddNewRoutePage extends StatefulWidget {
 class _AddNewRoutePageState extends State<AddNewRoutePage> {
   final String apiKey = "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc";
 
-  // --- FIX: Add GlobalKeys to dynamically find field positions ---
   final GlobalKey _startFieldKey = GlobalKey();
   final GlobalKey _destinationFieldKey = GlobalKey();
 
@@ -32,7 +33,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   Map<String, dynamic>? _directionsResponse;
 
   List<dynamic> _predictions = [];
-  // --- FIX: This state will hold the position of the active text field ---
   Rect? _activeFieldRect;
 
   Set<Polyline> _polylines = {};
@@ -42,7 +42,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   @override
   void initState() {
     super.initState();
-    // --- FIX: Update focus listeners to calculate the field's position ---
     _startFocusNode.addListener(_onFocusChange);
     _destinationFocusNode.addListener(_onFocusChange);
   }
@@ -56,7 +55,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     }
 
     if (activeKey != null) {
-      // Find the render object and calculate its screen position and size
       final renderBox = activeKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
         final offset = renderBox.localToGlobal(Offset.zero);
@@ -71,7 +69,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -111,7 +108,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   }
 
   Future<void> _getRoute() async {
-    // (This function remains unchanged)
     if (_startLocation == null || _destinationLocation == null) return;
     final startPlaceId = _startLocation!['place_id'];
     final destinationPlaceId = _destinationLocation!['place_id'];
@@ -155,7 +151,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     final routeData = _directionsResponse!['routes'][0];
     final leg = routeData['legs'][0];
     
-    // Get the start and end coordinates
     final startLocation = leg['start_location'];
     final endLocation = leg['end_location'];
 
@@ -167,14 +162,14 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       duration: leg['duration']['text'],
       polylinePoints: _polylines.first.points,
       bounds: _createBounds(_polylines.first.points),
-      latitude: endLocation['lat'], // Save destination coordinates
+      latitude: endLocation['lat'],
       longitude: endLocation['lng'],
-      startLatitude: startLocation['lat'], // Save starting coordinates
+      startLatitude: startLocation['lat'],
       startLongitude: startLocation['lng'],
-      polylineEncoded: routeData['overview_polyline']['points'], // Save encoded polyline
+      polylineEncoded: routeData['overview_polyline']['points'],
+      estimatedFare: 'N/A', // <--- Added estimatedFare with a placeholder value
     );
 
-    // Add the new route to the shared list
     favoriteRoutes.add(newRoute);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -185,7 +180,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   }
 
   LatLngBounds _createBounds(List<LatLng> positions) {
-    // (This function remains unchanged)
     final southwestLat = positions.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
     final southwestLon = positions.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
     final northeastLat = positions.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
@@ -197,7 +191,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
   }
 
   InputDecoration _inputDecoration(String hintText) {
-    // (This function remains unchanged)
     return InputDecoration(
       filled: true,
       fillColor: const Color(0xFFF3EEE6),
@@ -220,7 +213,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
         },
         child: Stack(
           children: [
-            // This is your main page content
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
               child: Column(
@@ -230,7 +222,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                   const SizedBox(height: 20),
                   TextField(controller: _routeNameController, decoration: _inputDecoration('Route Name')),
                   const SizedBox(height: 15),
-                  // --- FIX: Wrap TextField in a Container with the key ---
                   Container(
                     key: _startFieldKey,
                     child: TextField(
@@ -241,7 +232,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  // --- FIX: Wrap TextField in a Container with the key ---
                   Container(
                     key: _destinationFieldKey,
                     child: TextField(
@@ -295,7 +285,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                 ],
               ),
             ),
-            // --- FIX: This dynamically positioned widget now holds the prediction list ---
             if (_predictions.isNotEmpty && _activeFieldRect != null)
               Positioned(
                 top: _activeFieldRect!.bottom,

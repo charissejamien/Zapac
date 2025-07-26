@@ -1,4 +1,7 @@
+// lib/models/favorite_route.dart
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 class FavoriteRoute {
   final String routeName;
   final String startAddress;
@@ -12,6 +15,7 @@ class FavoriteRoute {
   final double startLatitude;
   final double startLongitude;
   final String polylineEncoded;
+  final String estimatedFare; // <--- Add this line
 
   FavoriteRoute({
     required this.routeName,
@@ -26,5 +30,6 @@ class FavoriteRoute {
     required this.startLatitude,
     required this.startLongitude,
     required this.polylineEncoded,
+    required this.estimatedFare, // <--- Add this to the constructor
   });
 }

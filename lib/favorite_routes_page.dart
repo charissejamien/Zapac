@@ -1,11 +1,13 @@
+// lib/favorite_routes_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:zapac/add_new_route_page.dart';
 import 'package:zapac/models/favorite_route.dart';
 import 'package:zapac/route_detail_page.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
-import 'bottom_navbar.dart'; // Import the BottomNavBar
-import 'dashboard.dart';    // Import Dashboard
-import 'settings_page.dart'; // Import SettingsPage
+import 'bottom_navbar.dart';
+import 'dashboard.dart';
+import 'settings_page.dart';
 
 class FavoriteRoutesPage extends StatefulWidget {
   const FavoriteRoutesPage({super.key});
@@ -19,25 +21,24 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine colors based on the current theme brightness
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final Color appBarColor = isDarkMode ? Colors.grey[850]! : const Color(0xFF4A6FA5);
     final Color textColor = isDarkMode ? Colors.white : Colors.black;
-    final Color iconColor = isDarkMode ? Colors.white : Colors.black; // Ensure icon color is visible
+    final Color iconColor = isDarkMode ? Colors.white : Colors.black;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: appBarColor, // Use theme-dependent color
+        backgroundColor: appBarColor,
         elevation: 0,
         title: Text(
           'Favorite Routes',
-          style: TextStyle(color: Colors.white), // AppBar title always white for contrast
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white), // Make back button white
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.add_location_alt_outlined, color: iconColor, size: 28), // Use theme-dependent icon color
+            icon: Icon(Icons.add_location_alt_outlined, color: iconColor, size: 28),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -51,13 +52,13 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
         ],
       ),
       body: Container(
-        color: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: _favoriteRoutes.isEmpty
             ? Center(
                 child: Text(
                   'You have no favorite routes yet.\nClick the + icon to add one!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: textColor), // Use theme text color
+                  style: TextStyle(fontSize: 16, color: textColor),
                 ),
               )
             : ListView.builder(
@@ -70,7 +71,7 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                     elevation: 4,
-                    color: Theme.of(context).cardColor, // Use theme card color
+                    color: Theme.of(context).cardColor,
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       title: Text(
@@ -78,7 +79,7 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       subtitle: Column(
@@ -88,18 +89,26 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
                           Text(
                             'From: ${route.startAddress}',
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color), // Use theme text color
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                           ),
                           Text(
                             'To: ${route.endAddress}',
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color), // Use theme text color
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                           ),
                           const SizedBox(height: 5),
                           Text(
                             '${route.distance} (${route.duration})',
                             style: const TextStyle(
                                 color: Colors.grey, fontSize: 12),
+                          ),
+                          // Add the estimated fare below distance and duration
+                          Text(
+                            'Estimated Fare: ${route.estimatedFare}', // Assuming route.estimatedFare exists
+                            style: TextStyle(
+                                color: Theme.of(context).textTheme.bodySmall?.color, // Use a theme-appropriate color
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold), // You can adjust font properties
                           ),
                         ],
                       ),
@@ -118,7 +127,7 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
               ),
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: 1, // Set selectedIndex to 1 for Favorite Routes
+        selectedIndex: 1,
         onItemTapped: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
@@ -131,7 +140,6 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
               MaterialPageRoute(builder: (context) => const SettingsPage()),
             );
           }
-          // No need to navigate if index is 1 (current page)
         },
       ),
     );
