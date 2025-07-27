@@ -22,9 +22,14 @@ void addMarker(Set<Marker> markers, LatLng position, String markerId, String tit
 }
 
 // Get current location and add marker with better error handling
-Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapController mapController, BuildContext context) async {
+Future<void> getCurrentLocationAndMarker(
+  Set<Marker> markers,
+  GoogleMapController mapController,
+  BuildContext context, {
+  required bool Function() isMounted,
+}) async {
   // Check if the context is still valid before starting
-  if (!context.mounted) {
+  if (!isMounted()) {
     print('Context is not mounted, aborting getCurrentLocationAndMarker');
     return;
   }
@@ -33,7 +38,7 @@ Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapControlle
   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
     // Location services are not enabled, don't continue
-    if (context.mounted) {
+    if (isMounted()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Location services are disabled. Please enable them.'),
@@ -53,7 +58,7 @@ Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapControlle
   if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      if (context.mounted) {
+      if (isMounted()) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permission denied. Please enable location permissions in settings.')),
         );
@@ -66,7 +71,7 @@ Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapControlle
     Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     
     // Check if context is still mounted after async operation
-    if (!context.mounted) {
+    if (!isMounted()) {
       print('Context is no longer mounted after getting position');
       return;
     }
@@ -83,12 +88,12 @@ Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapControlle
     );
     
     // Check if context is still mounted before animating camera
-    if (context.mounted) {
+    if (isMounted()) {
       mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
     }
   } catch (e) {
     print('Error getting location: $e');
-    if (context.mounted) {
+    if (isMounted()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not get current location.')),
       );

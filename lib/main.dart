@@ -25,6 +25,10 @@ class ThemeNotifier extends ChangeNotifier {
       prefs.setBool('isDarkMode', mode == ThemeMode.dark);
     }
   }
+
+  void setInitialTheme(ThemeMode mode) {
+    _themeMode = mode;
+  }
 }
 
 // Global instance of ThemeNotifier (for simplicity, consider Provider for larger apps)
@@ -39,7 +43,7 @@ void main() async {
   // Load saved theme preference
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
-  themeNotifier.setThemeMode(isDarkMode ? ThemeMode.dark : ThemeMode.light);
+  themeNotifier.setInitialTheme(isDarkMode ? ThemeMode.dark : ThemeMode.light);
 
   runApp(const MyApp());
 }

@@ -130,7 +130,12 @@ class _DashboardState extends State<Dashboard> {
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
     // Use a safer approach for async operations after widget creation
-    getCurrentLocationAndMarker(_markers, _mapController, context).then((_) {
+    getCurrentLocationAndMarker(
+      _markers,
+      _mapController,
+      context,
+      isMounted: () => mounted,
+    ).then((_) {
       if (mounted) { // Check if widget is still mounted before calling setState
         setState(() {});
       }
@@ -168,7 +173,12 @@ class _DashboardState extends State<Dashboard> {
     if (!mounted) return; // Check before starting async operation
     
     try {
-      await getCurrentLocationAndMarker(_markers, _mapController, context);
+      await getCurrentLocationAndMarker(
+        _markers,
+        _mapController,
+        context,
+        isMounted: () => mounted,
+      );
       if (mounted) { // Check again after async operation
         setState(() {});
       }
