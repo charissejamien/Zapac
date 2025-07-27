@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart' hide SearchBar;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
-import 'profile_page.dart';
-import 'commenting_section.dart'; // Make sure this path is correct
+import 'commenting_section.dart';
 import 'bottom_navbar.dart';
 import 'AuthManager.dart';
 import 'dart:async';
-import 'floating_button.dart'; // Your new FloatingButton widget
-import 'add_insight_modal.dart'; // Your new Add Insight Modal
+import 'floating_button.dart';
+import 'add_insight_modal.dart';
 import 'search_bar_widget.dart';
 import 'map_utils.dart';
-
-// Import ChatMessage if it's moved to a separate file, otherwise it's still in commenting_section.dart
-import 'commenting_section.dart' show ChatMessage; // Only import ChatMessage from here
-
+import 'commenting_section.dart' show ChatMessage;
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
@@ -239,7 +234,7 @@ class _DashboardState extends State<Dashboard> {
       floatingActionButton: FloatingButton(
         isCommunityInsightExpanded: _isCommunityInsightExpanded,
         onAddInsightPressed: () {
-          if (!mounted) return; // Safety check
+          if (!mounted) return;
           // Call your new showAddInsightModal function
           showAddInsightModal(
             context: context,
@@ -275,11 +270,16 @@ class _DashboardState extends State<Dashboard> {
             // Pass the chat messages to CommentingSection
             CommentingSection(
               chatMessages: _chatMessages,
-              onExpansionChanged: _onCommunityInsightExpansionChanged,  // Pass the list down
+              onExpansionChanged: _onCommunityInsightExpansionChanged,
             ),
 
-            SearchBar(
-              onPlaceSelected: _handlePlaceSelected, // Use the safe method
+            Positioned(
+              top: 10.0,
+              left: 15.0,
+              right: 15.0,
+              child: SearchBar(
+                onPlaceSelected: _handlePlaceSelected,
+              ),
             ),
           ],
         ),
