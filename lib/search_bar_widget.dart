@@ -50,7 +50,9 @@ class _SearchBarState extends State<SearchBar> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: ShapeDecoration(
-        color: const Color(0xFFD9E0EA),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Color(0xFF2E2E2E)
+            : const Color(0xFFD9E0EA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(70)),
         shadows: [
           BoxShadow(
@@ -65,7 +67,12 @@ class _SearchBarState extends State<SearchBar> {
           Expanded(
             child: Row(
               children: [
-                const Icon(Icons.search, color: Color(0xFF6CA89A)),
+                Icon(
+                  Icons.search,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Color(0xFF6CA89A),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   // Use TextField with readOnly: true and onTap to trigger navigation
@@ -74,14 +81,16 @@ class _SearchBarState extends State<SearchBar> {
                     readOnly: true, // This makes the TextField not editable directly
                     onTap: () {
                       Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SearchDestinationPage()),
-                    );
+                        context,
+                        MaterialPageRoute(builder: (context) => const SearchDestinationPage()),
+                      );
                     }, // This will open the search page when tapped
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Where to?',
                       hintStyle: TextStyle(
-                        color: Colors.black54,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white54
+                            : Colors.black54,
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
@@ -89,11 +98,16 @@ class _SearchBarState extends State<SearchBar> {
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                     ),
+                    cursorColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
                   ),
                 ),
               ],

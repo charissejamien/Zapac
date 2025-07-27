@@ -278,8 +278,13 @@ class _DashboardState extends State<Dashboard> {
               onExpansionChanged: _onCommunityInsightExpansionChanged,  // Pass the list down
             ),
 
-            SearchBar(
-              onPlaceSelected: _handlePlaceSelected, // Use the safe method
+            Positioned(
+              top: 8, // SafeArea already accounts for the status bar; keep only a small gap
+              left: 16,
+              right: 16,
+              child: SearchBar(
+                onPlaceSelected: _handlePlaceSelected,
+              ),
             ),
           ],
         ),

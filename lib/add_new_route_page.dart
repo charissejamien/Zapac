@@ -1,5 +1,3 @@
-// lib/add_new_route_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -17,6 +15,8 @@ class AddNewRoutePage extends StatefulWidget {
 }
 
 class _AddNewRoutePageState extends State<AddNewRoutePage> {
+  static const String _darkMapStyle = '[{"elementType":"geometry","stylers":[{"color":"#1f1f1f"}]},{"elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#e0e0e0"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#1f1f1f"}]},{"featureType":"administrative","elementType":"geometry","stylers":[{"color":"#3a3a3a"}]},{"featureType":"poi","elementType":"geometry","stylers":[{"color":"#2a2a2a"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#273a2c"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#2c2c2c"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#1f1f1f"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#3d3d3d"}]},{"featureType":"transit","elementType":"geometry","stylers":[{"color":"#2a2a2a"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#0e1b25"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#a0a0a0"}]}]';
+
   final String apiKey = "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc";
 
   final GlobalKey _startFieldKey = GlobalKey();
@@ -82,6 +82,8 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    _mapController?.setMapStyle(isDark ? _darkMapStyle : null);
   }
 
   Future<void> _getPredictions(String input) async {
@@ -133,7 +135,12 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       setState(() {
         _directionsResponse = decoded;
         _polylines = {
-          Polyline(polylineId: const PolylineId('route'), color: const Color(0xFF4A6FA5), points: latLngList, width: 5)
+          Polyline(
+            polylineId: const PolylineId('route'),
+            color: Theme.of(context).colorScheme.primary,
+            points: latLngList,
+            width: 5,
+          )
         };
       });
 
@@ -217,19 +224,32 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     );
   }
 
-  InputDecoration _inputDecoration(String hintText) {
+  InputDecoration _inputDecoration(BuildContext context, String hintText) {
+    final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFFF3EEE6),
+      fillColor: cs.surface,
       hintText: hintText,
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.6)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final headerTextColor = isDark ? cs.onBackground : cs.primary;
     return Scaffold(
+      backgroundColor: cs.background,
       body: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
@@ -245,9 +265,17 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text("Add New Route", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF6CA89A)), textAlign: TextAlign.center),
+                  Text(
+                    "Add New Route",
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: headerTextColor),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 20),
-                  TextField(controller: _routeNameController, decoration: _inputDecoration('Route Name')),
+                  TextField(
+                    controller: _routeNameController,
+                    decoration: _inputDecoration(context, 'Route Name'),
+                    style: TextStyle(color: cs.onSurface),
+                  ),
                   const SizedBox(height: 15),
                   Container(
                     key: _startFieldKey,
@@ -255,7 +283,8 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                       controller: _startLocationController,
                       focusNode: _startFocusNode,
                       onChanged: _getPredictions,
-                      decoration: _inputDecoration('Starting Location'),
+                      decoration: _inputDecoration(context, 'Starting Location'),
+                      style: TextStyle(color: cs.onSurface),
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -265,7 +294,8 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                       controller: _destinationController,
                       focusNode: _destinationFocusNode,
                       onChanged: _getPredictions,
-                      decoration: _inputDecoration('Destination'),
+                      decoration: _inputDecoration(context, 'Destination'),
+                      style: TextStyle(color: cs.onSurface),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -287,10 +317,13 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                         child: ElevatedButton(
                           onPressed: _getRoute,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF6CA89A),
+                            backgroundColor: cs.surface,
+                            foregroundColor: isDark ? cs.onSurface : cs.primary,
                             padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF6CA89A))),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: cs.primary),
+                            ),
                           ),
                           child: const Text("Show Route"),
                         ),
@@ -300,11 +333,12 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                         child: ElevatedButton(
                           onPressed: _saveRoute,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6CA89A),
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text("Save Route", style: TextStyle(color: Colors.black)),
+                          child: const Text("Save Route"),
                         ),
                       ),
                     ],
@@ -318,6 +352,7 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                 left: _activeFieldRect!.left,
                 width: _activeFieldRect!.width,
                 child: Material(
+                  color: theme.cardColor,
                   elevation: 4.0,
                   borderRadius: BorderRadius.circular(10),
                   child: LimitedBox(
@@ -328,7 +363,10 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
                       itemCount: _predictions.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(_predictions[index]['description']),
+                          title: Text(
+                            _predictions[index]['description'],
+                            style: TextStyle(color: cs.onSurface),
+                          ),
                           onTap: () {
                             if (_startFocusNode.hasFocus) {
                               _startLocationController.text = _predictions[index]['description'];
