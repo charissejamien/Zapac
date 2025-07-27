@@ -274,9 +274,9 @@ class _DashboardState extends State<Dashboard> {
             ),
 
             Positioned(
-              top: 10.0,
-              left: 15.0,
-              right: 15.0,
+              top: 8, // SafeArea already accounts for the status bar; keep only a small gap
+              left: 16,
+              right: 16,
               child: SearchBar(
                 onPlaceSelected: _handlePlaceSelected,
               ),

@@ -67,7 +67,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     return Scaffold(
       appBar: AppBar(
         // Use theme's AppBar background color
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor, // <--- Change this line
+        backgroundColor: const Color.fromARGB(255, 109, 168, 155), // Example color, adjust as needed
         elevation: 0,
         leading: BackButton(
           color: Colors.white, // Keep white for contrast on dark grey or blue background
@@ -78,7 +78,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
         title: Text(
           widget.route.routeName,
           style: const TextStyle(
-            color: Colors.white, // Keep white for contrast
+            color: Colors.white // Keep white for contrast
           ),
         ),
         centerTitle: true,

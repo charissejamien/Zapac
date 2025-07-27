@@ -60,16 +60,19 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFD9E0EA), // Same as Dashboard
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6CA89A),
+        backgroundColor: cs.primary,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
+        iconTheme: IconThemeData(color: cs.onPrimary),
+        title: Text(
           'Search Destination',
           style: TextStyle(
-            color: Colors.white,
+            color: cs.onPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
             letterSpacing: 1.2,
@@ -83,13 +86,13 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: ShapeDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(70),
                 ),
                 shadows: [
                   BoxShadow(
-                    color: const Color(0xFF4A6FA5).withOpacity(0.2),
+                    color: (isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12)),
                     blurRadius: 6.8,
                     offset: const Offset(2, 5),
                   ),
@@ -101,17 +104,17 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Where to?',
-                  hintStyle: const TextStyle(
-                    color: Colors.black54,
+                  hintStyle: TextStyle(
+                    color: cs.onSurface.withOpacity(0.6),
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6CA89A)),
+                  prefixIcon: Icon(Icons.search, color: cs.primary),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                style: const TextStyle(
-                  color: Colors.black,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -128,18 +131,21 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
                 return ElevatedButton(
                   onPressed: () => Navigator.pop(context, {'route': route}),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6CA89A),
+                    backgroundColor: cs.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 2,
                   ),
-                  child: Text(route.routeName, style: const TextStyle(color: Colors.white)),
+                  child: Text(
+                    route.routeName,
+                    style: TextStyle(color: cs.onPrimary),
+                  ),
                 );
               }).toList(),
             ),
           ),
-          const Divider(height: 32, color: Color(0xFF6CA89A)),
+          Divider(height: 32, color: cs.primary.withOpacity(0.4)),
           // Predictions or Recent List
           Expanded(
             child: _searchController.text.isEmpty
@@ -152,19 +158,21 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   }
 
   Widget _buildPredictionList() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return ListView.builder(
       itemCount: _predictions.length,
       itemBuilder: (context, index) {
         return Card(
-          color: Colors.white,
+          color: theme.cardColor,
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: ListTile(
-            leading: const Icon(Icons.location_on_outlined, color: Color(0xFF6CA89A)),
+            leading: Icon(Icons.location_on_outlined, color: cs.primary),
             title: Text(
               _predictions[index]['description'],
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(fontWeight: FontWeight.w500, color: cs.onSurface),
             ),
             onTap: () {
               Navigator.pop(context, {'place': _predictions[index]});
@@ -176,17 +184,20 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   }
 
   Widget _buildRecentList() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final headerColor = theme.brightness == Brightness.dark ? cs.onSurface.withOpacity(0.92) : cs.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
           child: Text(
             "Recent",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF4A6FA5),
+              color: headerColor,
             ),
           ),
         ),
@@ -195,15 +206,15 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
             itemCount: _recentLocations.length,
             itemBuilder: (context, index) {
               return Card(
-                color: Colors.white,
+                color: theme.cardColor,
                 elevation: 1,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                 child: ListTile(
-                  leading: const Icon(Icons.history, color: Color(0xFF6CA89A)),
+                  leading: Icon(Icons.history, color: cs.primary),
                   title: Text(
                     _recentLocations[index]['description'],
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w500, color: cs.onSurface),
                   ),
                   onTap: () => Navigator.pop(context, {'place': _recentLocations[index]}),
                 ),

@@ -87,6 +87,8 @@ class _LoginBodyState extends State<LoginBody> {
           Text("   Email", style: TextStyle(fontSize: 16)),
           TextField(
             controller: emailController,
+            style: TextStyle(color: Colors.black),
+            cursorColor: Colors.black,
             decoration: InputDecoration(
               filled: true,
               fillColor: Color(0xFFF3EEE6),
@@ -105,6 +107,8 @@ class _LoginBodyState extends State<LoginBody> {
           TextField(
             controller: passwordController,
             obscureText: _obscurePassword,
+            style: TextStyle(color: Colors.black),
+            cursorColor: Colors.black,
             decoration: InputDecoration(
               filled: true,
               fillColor: Color(0xFFF3EEE6),
@@ -119,6 +123,9 @@ class _LoginBodyState extends State<LoginBody> {
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black
+                      : Colors.black54,
                 ),
                 onPressed: () {
                   setState(() {
@@ -164,7 +171,11 @@ class _LoginBodyState extends State<LoginBody> {
             child: RichText(
               text: TextSpan(
                 text: "Forgotten your password? ",
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+                ),
                 children: [
                   TextSpan(
                     text: " Reset password",

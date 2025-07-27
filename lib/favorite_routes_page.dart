@@ -1,5 +1,3 @@
-// lib/favorite_routes_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:zapac/add_new_route_page.dart';
 import 'package:zapac/models/favorite_route.dart';
@@ -21,6 +19,8 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final Color appBarColor = isDarkMode ? Colors.grey[850]! : const Color(0xFF4A6FA5);
     final Color textColor = isDarkMode ? Colors.white : Colors.black;
@@ -28,17 +28,17 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: appBarColor,
+        backgroundColor: cs.primary,
         elevation: 0,
         title: Text(
           'Favorite Routes',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: cs.onPrimary),
         ),
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: cs.onPrimary),
         actions: [
           IconButton(
-            icon: Icon(Icons.add_location_alt_outlined, color: iconColor, size: 28),
+            icon: Icon(Icons.add_location_alt_outlined, color: cs.onPrimary, size: 28),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -52,13 +52,13 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
         ],
       ),
       body: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: cs.background,
         child: _favoriteRoutes.isEmpty
             ? Center(
                 child: Text(
                   'You have no favorite routes yet.\nClick the + icon to add one!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: textColor),
+                  style: TextStyle(fontSize: 16, color: cs.onSurface),
                 ),
               )
             : ListView.builder(
@@ -79,7 +79,7 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          color: cs.onSurface,
                         ),
                       ),
                       subtitle: Column(
@@ -89,26 +89,26 @@ class _FavoriteRoutesPageState extends State<FavoriteRoutesPage> {
                           Text(
                             'From: ${route.startAddress}',
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                            style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                           ),
                           Text(
                             'To: ${route.endAddress}',
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                            style: TextStyle(color: cs.onSurface.withOpacity(0.8)),
                           ),
                           const SizedBox(height: 5),
                           Text(
                             '${route.distance} (${route.duration})',
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                                color: cs.onSurface.withOpacity(0.6), fontSize: 12),
                           ),
                           // Add the estimated fare below distance and duration
                           Text(
                             'Estimated Fare: ${route.estimatedFare}', // Assuming route.estimatedFare exists
                             style: TextStyle(
-                                color: Theme.of(context).textTheme.bodySmall?.color, // Use a theme-appropriate color
+                                color: cs.onSurface.withOpacity(0.8),
                                 fontSize: 12,
-                                fontWeight: FontWeight.bold), // You can adjust font properties
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
