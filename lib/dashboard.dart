@@ -36,6 +36,8 @@ class _DashboardState extends State<Dashboard> {
 
   StreamSubscription? _otherUserLocationSubscription; // For WebSocket updates
 
+  bool _isMapReady = false; // <-- Added flag to track if map is ready
+
   // MODIFIED: Dashboard now owns the chat messages list
   final List<ChatMessage> _chatMessages = [
     ChatMessage(
@@ -129,6 +131,8 @@ class _DashboardState extends State<Dashboard> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    _isMapReady = true; // <-- Set map ready flag
+
     // Use a safer approach for async operations after widget creation
     getCurrentLocationAndMarker(
       _markers,
@@ -136,7 +140,7 @@ class _DashboardState extends State<Dashboard> {
       context,
       isMounted: () => mounted,
     ).then((_) {
-      if (mounted) { // Check if widget is still mounted before calling setState
+      if (mounted && _isMapReady) { // Check if widget is still mounted and map ready before calling setState
         setState(() {});
       }
     }).catchError((error) {
@@ -170,7 +174,7 @@ class _DashboardState extends State<Dashboard> {
 
   // Safe method to handle async location updates
   Future<void> _handleMyLocationPressed() async {
-    if (!mounted) return; // Check before starting async operation
+    if (!mounted || !_isMapReady) return; // Check before starting async operation
     
     try {
       await getCurrentLocationAndMarker(
@@ -179,7 +183,7 @@ class _DashboardState extends State<Dashboard> {
         context,
         isMounted: () => mounted,
       );
-      if (mounted) { // Check again after async operation
+      if (mounted && _isMapReady) { // Check again after async operation
         setState(() {});
       }
     } catch (error) {
