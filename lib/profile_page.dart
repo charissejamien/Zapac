@@ -255,19 +255,33 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _onProfilePicTap() async {
     final should = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).colorScheme.surface, // Use theme surface color
-        content: Text("Do you want to change your profile pic?", style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)), // Use onSurface for text
-        actions: [
-          TextButton(
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: Theme.of(ctx).colorScheme.surface, // Use theme surface color
+          content: Text("Do you want to change your profile pic?", style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)), // Use onSurface for text
+          actions: [
+            TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text("Cancel", style: TextStyle(color: Theme.of(ctx).colorScheme.primary))), // Use primary color for text button
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text("Yes", style: TextStyle(color: Theme.of(ctx).colorScheme.primary)), // Use primary color for text button
-          ),
-        ],
-      ),
+              child: const Text("Cancel"),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(ctx).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text("Yes"),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(ctx).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+              ),
+            ),
+          ],
+        );
+      },
     );
     if (should == true) {
       final XFile? picked = await _imagePicker.pickImage(
@@ -291,75 +305,90 @@ class _ProfilePageState extends State<ProfilePage> {
     final passwordCtrl = TextEditingController();
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colorScheme.surface, // Use theme surface color
-        title: Text("Change your email",
-            style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)), // Use onSurface for title
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-                "You will need to verify your account again after changing your email address. Please make sure it is correct.",
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)), // Use onSurfaceVariant for text
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailCtrl,
-              decoration: InputDecoration(
-                  labelText: "New Email",
-                  labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
-                  border: const OutlineInputBorder(),
-                  fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
-                  filled: true,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface, // Use theme surface color
+          title: Text("Change your email",
+              style:
+                  TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)), // Use onSurface for title
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                  "You will need to verify your account again after changing your email address. Please make sure it is correct.",
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)), // Use onSurfaceVariant for text
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                decoration: InputDecoration(
+                    labelText: "New Email",
+                    labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
+                    border: const OutlineInputBorder(),
+                    fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
+                    filled: true,
+                ),
+                style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
               ),
-              style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordCtrl,
-              obscureText: true,
-              decoration: InputDecoration(
-                  labelText: "Password",
-                  labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
-                  border: const OutlineInputBorder(),
-                  fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
-                  filled: true,
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: true,
+                decoration: InputDecoration(
+                    labelText: "Password",
+                    labelStyle: TextStyle(color: colorScheme.onSurface), // Use onSurface for label
+                    border: const OutlineInputBorder(),
+                    fillColor: colorScheme.surfaceContainerHighest, // Use a container color for fill
+                    filled: true,
+                ),
+                style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
               ),
-              style: TextStyle(color: colorScheme.onSurface), // Text color in TextField
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text("Cancel", style: TextStyle(color: colorScheme.primary))), // Use primary color for text button
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary, // Use theme primary color
-                foregroundColor: colorScheme.onPrimary), // Use onPrimary for text color
-            onPressed: () async {
-              final newEmail = emailCtrl.text.trim();
-              final newPassword = passwordCtrl.text;
-              final updatedUser = User(
-                email: newEmail,
-                password: newPassword,
-                firstName: _currentUser!.firstName,
-                lastName: _currentUser!.lastName,
-                middleName: _currentUser!.middleName,
-                profileImageUrl: _currentUser!.profileImageUrl,
-                type: _currentUser!.type,
-                currentLocation: _currentUser!.currentLocation,
-                gender: _currentUser!.gender,
-                dateOfBirth: _currentUser!.dateOfBirth,
-              );
-              await AuthManager().updateUser(updatedUser);
-              setState(() { _currentUser = updatedUser; });
-              Navigator.of(ctx).pop();
-            },
-            child: const Text("Submit"),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text("Cancel"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(ctx).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary, // Use theme primary color
+                        foregroundColor: colorScheme.onPrimary), // Use onPrimary for text color
+                    onPressed: () async {
+                      final newEmail = emailCtrl.text.trim();
+                      final newPassword = passwordCtrl.text;
+                      final updatedUser = User(
+                        email: newEmail,
+                        password: newPassword,
+                        firstName: _currentUser!.firstName,
+                        lastName: _currentUser!.lastName,
+                        middleName: _currentUser!.middleName,
+                        profileImageUrl: _currentUser!.profileImageUrl,
+                        type: _currentUser!.type,
+                        currentLocation: _currentUser!.currentLocation,
+                        gender: _currentUser!.gender,
+                        dateOfBirth: _currentUser!.dateOfBirth,
+                      );
+                      await AuthManager().updateUser(updatedUser);
+                      setState(() { _currentUser = updatedUser; });
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text("Submit"),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+          actions: [],
+        );
+      },
     );
   }
 
@@ -562,40 +591,58 @@ class _ProfilePageState extends State<ProfilePage> {
     ];
     await showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx2, setSB) => AlertDialog(
-          backgroundColor: colorScheme.surface, // Use theme surface color
-          title: Text("Delete your Account?", style: TextStyle(color: colorScheme.error, fontSize: 18, fontWeight: FontWeight.bold)), // Use theme error color
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(
-              "We’re really sorry to see you go. Are you sure you want to delete your account? Once you confirm, your data will be gone.",
-              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant), // Use onSurfaceVariant
-            ),
-            const SizedBox(height: 12),
-            ...reasons.map((r) => RadioListTile<String>(
-                  title: Text(r, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)), // Use onSurface
-                  value: r,
-                  groupValue: reason,
-                  onChanged: (v) => setSB(() => reason = v),
-                  activeColor: colorScheme.primary, // Use theme primary
-                )),
-          ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text("Cancel", style: TextStyle(color: colorScheme.primary))), // Use primary
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: colorScheme.error), // Use theme error
-              onPressed: () {
-                AuthManager().logout();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const AuthScreen()),
-                  (_) => false,
-                );
-              },
-              child: const Text("Delete Account"),
-            ),
-          ],
-        ),
-      ),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return StatefulBuilder(
+          builder: (ctx2, setSB) => AlertDialog(
+            backgroundColor: colorScheme.surface, // Use theme surface color
+            title: Text("Delete your Account?", style: TextStyle(color: colorScheme.error, fontSize: 18, fontWeight: FontWeight.bold)), // Use theme error color
+            content: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text(
+                "We’re really sorry to see you go. Are you sure you want to delete your account? Once you confirm, your data will be gone.",
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant), // Use onSurfaceVariant
+              ),
+              const SizedBox(height: 12),
+              ...reasons.map((r) => RadioListTile<String>(
+                    title: Text(r, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)), // Use onSurface
+                    value: r,
+                    groupValue: reason,
+                    onChanged: (v) => setSB(() => reason = v),
+                    activeColor: colorScheme.primary, // Use theme primary
+                  )),
+            ]),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("Cancel"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(ctx).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(),
+                onPressed: () {
+                  AuthManager().logout();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    (_) => false,
+                  );
+                },
+                child: Text(
+                  "Delete Account",
+                  style: TextStyle(
+                    color: Theme.of(ctx).brightness == Brightness.dark
+                        ? Colors.red
+                        : Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

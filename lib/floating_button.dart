@@ -19,7 +19,9 @@ class FloatingButton extends StatelessWidget {
       onPressed: isCommunityInsightExpanded
           ? onAddInsightPressed
           : onMyLocationPressed,
-      backgroundColor: const Color(0xFF6CA89A),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF4E7D71)
+          : const Color(0xFF6CA89A),
       heroTag: isCommunityInsightExpanded ? 'addInsightBtn' : 'myLocationBtn',
       child: Icon(
         isCommunityInsightExpanded ? Icons.add : Icons.my_location,

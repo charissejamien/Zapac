@@ -425,6 +425,7 @@ class _CommentingSectionState extends State<CommentingSection> {
 
   Widget _buildFilterChip(String label) {
     final bool isSelected = _selectedFilter == label;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
@@ -432,9 +433,7 @@ class _CommentingSectionState extends State<CommentingSection> {
         label: Text(
           label,
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -444,7 +443,7 @@ class _CommentingSectionState extends State<CommentingSection> {
             setState(() => _selectedFilter = label);
           }
         },
-        backgroundColor: const Color(0xFF6CA89A).withOpacity(0.5),
+        backgroundColor: const Color(0xFF6CA89A),
         selectedColor: const Color(0xFF4A6FA5),
         // labelStyle removed, as label Text widget now handles style
         shape: RoundedRectangleBorder(

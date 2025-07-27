@@ -15,7 +15,7 @@ void showAddInsightModal({
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -45,14 +45,18 @@ void showAddInsightModal({
                   children: [
                     Text(
                       user.firstName, // or user.fullName
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Posting publicly across ZAPAC',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.6),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -62,23 +66,27 @@ void showAddInsightModal({
             TextField(
               controller: insightController,
               autofocus: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Share an insight to the community....',
+                hintStyle: TextStyle(color: Theme.of(context).hintColor),
                 border: InputBorder.none,
               ),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               maxLines: 4,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: routeController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'What route are you on?',
+                hintStyle: TextStyle(color: Theme.of(context).hintColor),
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 10,
                 ),
               ),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
             ),
             const SizedBox(height: 16),
             SizedBox(
