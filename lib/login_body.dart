@@ -26,6 +26,13 @@ class _LoginBodyState extends State<LoginBody> {
       _errorMessage = '';
     });
 
+    if (email.isEmpty && password.isEmpty) {
+      setState(() {
+        _errorMessage = "Please enter your credentials.";
+      });
+      return;
+    }
+
     if (email.isEmpty) {
       setState(() {
         _errorMessage = "Please enter your email address.";

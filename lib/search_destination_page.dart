@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zapac/data/favorite_routes_data.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'map_utils.dart';
+import 'map_utils.dart'; // Ensure map_utils.dart has the showRoute modifications
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Import LatLng
 
 class SearchDestinationPage extends StatefulWidget {
   final String? initialSearchText;
@@ -18,14 +19,16 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> _predictions = [];
 
+  // MODIFIED: _recentLocations now contains exact latitude and longitude
   final List<Map<String, dynamic>> _recentLocations = [
-    {'description': 'House ni Gorgeous', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-    {'description': 'House sa Gwapa', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-    {'description': 'House ni Pretty', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-    {'description': 'SM J Mall', 'place_id': 'ChIJb_MjLwtwqTMReyS2tJz13ic'},
-    {'description': 'House ni Lim', 'place_id': 'ChIJ7d3F9kFwqTMRgR2kYh2sF-8'},
-    {'description': 'iAcademy Cebu', 'place_id': 'ChIJ155n0wtwqTMRsP82-fG436Y'},
-    {'description': 'Ayala Malls Central Bloc', 'place_id': 'ChIJ-c52xgtwqTMR_F098xGvXD4'},
+    // Using approximate coordinates in Cebu/Lapu-Lapu for demo purposes
+    {'name': 'House ni Gorgeous', 'latitude': 10.3100, 'longitude': 123.9150}, // Near Fuente Osmena
+    {'name': 'House sa Gwapa', 'latitude': 10.2900, 'longitude': 123.8900}, // Near Cebu City Sports Complex
+    {'name': 'House ni Pretty', 'latitude': 10.3250, 'longitude': 123.9000}, // Near IT Park
+    {'name': 'SM City Cebu', 'latitude': 10.3106, 'longitude': 123.9189},
+    {'name': 'House ni Lim', 'latitude': 10.3050, 'longitude': 123.9300}, // Somewhere in Lapu-Lapu
+    {'name': 'iAcademy Cebu', 'latitude': 10.3340, 'longitude': 123.9050},
+    {'name': 'Ayala Malls Central Bloc', 'latitude': 10.3168, 'longitude': 123.9056},
   ];
 
   @override
@@ -42,7 +45,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
       setState(() => _predictions = []);
       return;
     }
-    const location = "10.3157,123.8854";
+    const location = "10.3157,123.8854"; // Center of Cebu for biasing
     const radius = "30000";
     const components = "country:ph";
     String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&location=$location&radius=$radius&strictbounds=true&components=$components';
@@ -60,19 +63,16 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: const Color(0xFFD9E0EA), // Same as Dashboard
       appBar: AppBar(
-        backgroundColor: cs.primary,
+        backgroundColor: const Color(0xFF6CA89A),
         elevation: 0,
-        iconTheme: IconThemeData(color: cs.onPrimary),
-        title: Text(
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
           'Search Destination',
           style: TextStyle(
-            color: cs.onPrimary,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 20,
             letterSpacing: 1.2,
@@ -86,13 +86,13 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: ShapeDecoration(
-                color: cs.surface,
+                color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(70),
                 ),
                 shadows: [
                   BoxShadow(
-                    color: (isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12)),
+                    color: const Color(0xFF4A6FA5).withOpacity(0.2),
                     blurRadius: 6.8,
                     offset: const Offset(2, 5),
                   ),
@@ -104,17 +104,17 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Where to?',
-                  hintStyle: TextStyle(
-                    color: cs.onSurface.withOpacity(0.6),
+                  hintStyle: const TextStyle(
+                    color: Colors.black54,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
-                  prefixIcon: Icon(Icons.search, color: cs.primary),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6CA89A)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                style: TextStyle(
-                  color: cs.onSurface,
+                style: const TextStyle(
+                  color: Colors.black,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -131,21 +131,18 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
                 return ElevatedButton(
                   onPressed: () => Navigator.pop(context, {'route': route}),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
+                    backgroundColor: const Color(0xFF6CA89A),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 2,
                   ),
-                  child: Text(
-                    route.routeName,
-                    style: TextStyle(color: cs.onPrimary),
-                  ),
+                  child: Text(route.routeName, style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
             ),
           ),
-          Divider(height: 32, color: cs.primary.withOpacity(0.4)),
+          const Divider(height: 32, color: Color(0xFF6CA89A)),
           // Predictions or Recent List
           Expanded(
             child: _searchController.text.isEmpty
@@ -158,23 +155,22 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   }
 
   Widget _buildPredictionList() {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     return ListView.builder(
       itemCount: _predictions.length,
       itemBuilder: (context, index) {
         return Card(
-          color: theme.cardColor,
+          color: Colors.white,
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: ListTile(
-            leading: Icon(Icons.location_on_outlined, color: cs.primary),
+            leading: const Icon(Icons.location_on_outlined, color: Color(0xFF6CA89A)),
             title: Text(
               _predictions[index]['description'],
-              style: TextStyle(fontWeight: FontWeight.w500, color: cs.onSurface),
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
             onTap: () {
+              // This is for Google Places API predictions
               Navigator.pop(context, {'place': _predictions[index]});
             },
           ),
@@ -184,20 +180,17 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
   }
 
   Widget _buildRecentList() {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final headerColor = theme.brightness == Brightness.dark ? cs.onSurface.withOpacity(0.92) : cs.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
           child: Text(
             "Recent",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: headerColor,
+              color: Color(0xFF4A6FA5),
             ),
           ),
         ),
@@ -205,18 +198,28 @@ class _SearchDestinationPageState extends State<SearchDestinationPage> {
           child: ListView.builder(
             itemCount: _recentLocations.length,
             itemBuilder: (context, index) {
+              final recentLocation = _recentLocations[index];
               return Card(
-                color: theme.cardColor,
+                color: Colors.white,
                 elevation: 1,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                 child: ListTile(
-                  leading: Icon(Icons.history, color: cs.primary),
+                  leading: const Icon(Icons.history, color: Color(0xFF6CA89A)),
                   title: Text(
-                    _recentLocations[index]['description'],
-                    style: TextStyle(fontWeight: FontWeight.w500, color: cs.onSurface),
+                    recentLocation['name'] as String, // Use 'name' for display
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  onTap: () => Navigator.pop(context, {'place': _recentLocations[index]}),
+                  onTap: () {
+                    // MODIFIED: Pass the exact latitude and longitude for recent locations
+                    Navigator.pop(context, {
+                      'recent_location': {
+                        'name': recentLocation['name'],
+                        'latitude': recentLocation['latitude'],
+                        'longitude': recentLocation['longitude'],
+                      }
+                    });
+                  },
                 ),
               );
             },

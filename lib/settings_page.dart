@@ -3,7 +3,9 @@ import 'package:zapac/bottom_navbar.dart';
 import 'package:zapac/dashboard.dart';
 import 'package:zapac/favorite_routes_page.dart';
 import 'package:zapac/profile_page.dart';
-import 'main.dart';
+import 'main.dart'; // Import main.dart to access themeNotifier
+import 'package:zapac/AuthManager.dart'; // Import AuthManager
+import 'package:zapac/auth_screen.dart'; // Import AuthScreen for navigation
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,7 +15,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-
   // User details (replace with actual user data from your AuthManager or a user model)
   final String _userEmail = 'charisjmn@gmail.com';
   final String _userName = 'Charisse Jamien T';
@@ -26,8 +27,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize the switch value based on the current theme mode
-    // _isDarkMode = themeNotifier.themeMode == ThemeMode.dark; // This line can be removed if directly using themeNotifier.themeMode.
   }
 
   @override
@@ -125,13 +124,26 @@ class _SettingsPageState extends State<SettingsPage> {
                     );
                   },
                 ),
+                // NEW: Logout ListTile
+                _buildSettingsTile(
+                  title: 'Logout',
+                  onTap: () {
+                    AuthManager().logout(); // Call the logout method from AuthManager
+                    // Navigate back to the authentication screen and remove all previous routes
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const AuthScreen()),
+                      (Route<dynamic> route) => false, // This condition removes all routes from the stack
+                    );
+                  },
+                  trailing: Icon(Icons.logout, color: Theme.of(context).iconTheme.color), // Optional: Add a logout icon
+                ),
               ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: 2,
+        selectedIndex: 2, // Assuming settings is the third item (index 2)
         onItemTapped: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
@@ -143,7 +155,13 @@ class _SettingsPageState extends State<SettingsPage> {
               context,
               MaterialPageRoute(builder: (context) => const FavoriteRoutesPage()),
             );
+          } else if (index == 3) { // Profile Page index, if your nav bar has 4 items
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
           }
+          // The settings page itself is already active at index 2, so no navigation needed for index 2
         },
       ),
     );

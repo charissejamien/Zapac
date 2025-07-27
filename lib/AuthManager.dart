@@ -40,7 +40,7 @@ class AuthManager {
     ),
     User(
       email: 'charisjmn@gmail.com',
-      password: 'vanilla',
+      password: 'vanilla08',
       firstName: 'Charisse',
       lastName: 'T',
       middleName: 'Jamien',
