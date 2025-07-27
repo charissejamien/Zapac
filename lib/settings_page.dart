@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zapac/bottom_navbar.dart';
 import 'package:zapac/dashboard.dart';
 import 'package:zapac/favorite_routes_page.dart';
-import 'package:zapac/profile_page.dart'; 
-
-// lib/settings_page.dart
-// ... (imports remain the same)
-import 'main.dart'; // Import main.dart to access themeNotifier
+import 'package:zapac/profile_page.dart';
+import 'main.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,8 +13,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // No longer needs a local _isDarkMode state, as it will read from themeNotifier
-  // bool _isDarkMode = false; // You can remove this line
 
   // User details (replace with actual user data from your AuthManager or a user model)
   final String _userEmail = 'kerropiandcinnamon@gmail.com';

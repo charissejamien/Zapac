@@ -141,26 +141,22 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     }
   }
 
-  // New function to calculate estimated fare based on distance
   String _calculateEstimatedFare(String distanceText) {
-    // Extract numerical value from distance string (e.g., "5.2 km")
     double distanceKm;
     try {
-      // Remove " km" and any commas, then parse to double
       distanceKm = double.parse(distanceText.replaceAll(' km', '').replaceAll(',', ''));
     } catch (e) {
       print('Error parsing distance: $e');
-      return 'Fare N/A'; // Return placeholder if parsing fails
+      return 'Fare N/A';
     }
 
     double fare;
     if (distanceKm <= 1.0) {
-      fare = distanceKm * 30; // Short-distance logic: ₱30 per km
+      fare = distanceKm * 30;
     } else {
-      fare = 23.20 + (distanceKm * 9.12); // Standard fare logic: ₱23.20 base + ₱9.12 per km
+      fare = 23.20 + (distanceKm * 9.12);
     }
 
-    // Format the fare to two decimal places and add currency symbol
     return '₱${fare.toStringAsFixed(2)}';
   }
 
@@ -178,7 +174,6 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
     final startLocation = leg['start_location'];
     final endLocation = leg['end_location'];
 
-    // Calculate the estimated fare using the new function
     final String calculatedFare = _calculateEstimatedFare(leg['distance']['text']);
 
     final newRoute = FavoriteRoute(
@@ -194,7 +189,7 @@ class _AddNewRoutePageState extends State<AddNewRoutePage> {
       startLatitude: startLocation['lat'],
       startLongitude: startLocation['lng'],
       polylineEncoded: routeData['overview_polyline']['points'],
-      estimatedFare: calculatedFare, // <--- Use the calculated fare here
+      estimatedFare: calculatedFare,
     );
 
     favoriteRoutes.add(newRoute);

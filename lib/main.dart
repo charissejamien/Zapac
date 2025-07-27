@@ -6,9 +6,8 @@ import 'firebase_options.dart';
 import 'auth_screen.dart';
 import 'dashboard.dart';
 import 'AuthManager.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import for SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Create a ThemeNotifier to manage theme state
 class ThemeNotifier extends ChangeNotifier {
   ThemeMode _themeMode;
 
@@ -20,14 +19,12 @@ class ThemeNotifier extends ChangeNotifier {
     if (mode != _themeMode) {
       _themeMode = mode;
       notifyListeners();
-      // Save theme preference to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       prefs.setBool('isDarkMode', mode == ThemeMode.dark);
     }
   }
 }
 
-// Global instance of ThemeNotifier (for simplicity, consider Provider for larger apps)
 final ThemeNotifier themeNotifier = ThemeNotifier(ThemeMode.light);
 
 void main() async {
@@ -36,7 +33,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Load saved theme preference
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
   themeNotifier.setThemeMode(isDarkMode ? ThemeMode.dark : ThemeMode.light);
@@ -49,7 +45,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder( // Use ListenableBuilder to react to themeNotifier changes
+    return ListenableBuilder(
       listenable: themeNotifier,
       builder: (context, child) {
         return MaterialApp(
@@ -58,17 +54,18 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
             primaryColor: const Color(0xFF4A6FA5),
             // Define other light mode colors
+            appBarTheme: const AppBarTheme( // <--- Add this AppBarTheme
+              color: Color(0xFF4A6FA5), // Set AppBar background to blue in light mode
+            ),
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
-            primaryColor: const Color(0xFF273238), // Changed to #273238 for primary color
-            // Define other dark mode colors
-            appBarTheme: AppBarTheme(color: Colors.grey[900]), // This affects AppBar widgets, not the profile page header container
+            primaryColor: const Color(0xFF273238),
+            appBarTheme: AppBarTheme(color: Colors.grey[900]),
             scaffoldBackgroundColor: Colors.grey[850],
             cardColor: Colors.grey[800],
-            // Add more dark theme specific colors and styles as needed
           ),
-          themeMode: themeNotifier.themeMode, // Use the theme mode from the notifier
+          themeMode: themeNotifier.themeMode,
           home: const AuthWrapper(),
           debugShowCheckedModeBanner: false,
         );
@@ -76,7 +73,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-// AuthWrapper remains as is from your file
+
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
