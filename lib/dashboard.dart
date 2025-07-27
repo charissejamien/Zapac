@@ -224,6 +224,15 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  Future<void> safeAnimate(CameraUpdate update) async {
+    if (!mounted || !_isMapReady) return;
+    try {
+      await _mapController.animateCamera(update);
+    } catch (error) {
+      print('Error animating camera: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
