@@ -97,23 +97,28 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
-    _addMarker(_initialCameraPosition, 'cebu_city_marker', 'Cebu City');
-    _getCurrentLocationAndMarker();
+    addMarker(_markers, _initialCameraPosition, 'cebu_city_marker', 'Cebu City');
 
     _otherUserLocationSubscription = AuthManager().otherUserLocationStream
         .listen((location) {
           if (mounted) { // ADDED mounted check
-            _updateOtherUserMarker(location);
-          }
+          updateOtherUserMarker(
+            _markers,
+            location,
+            AuthManager().otherUser?.fullName,
+          );
+          setState(() {});
+    }
         });
 
     if (AuthManager().otherUser != null &&
         AuthManager().otherUser!.currentLocation != null) {
-      _addMarker(
-        AuthManager().otherUser!.currentLocation!,
-        'other_user_location',
-        AuthManager().otherUser!.fullName,
-      );
+    addMarker(
+      _markers,
+      AuthManager().otherUser!.currentLocation!,
+      'other_user_location',
+      AuthManager().otherUser!.fullName,
+    );
     }
   }
 
@@ -123,89 +128,11 @@ class _DashboardState extends State<Dashboard> {
     super.dispose();
   }
 
-  void _addMarker(
-    LatLng position,
-    String markerId,
-    String title, {
-    BitmapDescriptor? icon,
-  }) {
-    if (mounted) { // ADDED mounted check
-      setState(() {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(markerId),
-            position: position,
-            infoWindow: InfoWindow(title: title),
-            icon: icon ?? BitmapDescriptor.defaultMarker,
-          ),
-        );
-      });
-    }
-  }
-
-  void _updateOtherUserMarker(LatLng newLocation) {
-    if (mounted) { // ADDED mounted check
-      setState(() {
-        _markers.removeWhere(
-          (marker) => marker.markerId.value == 'other_user_location',
-        );
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('other_user_location'),
-            position: newLocation,
-            infoWindow: InfoWindow(
-              title: AuthManager().otherUser?.fullName ?? 'Other User',
-            ),
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueOrange,
-            ),
-          ),
-        );
-      });
-    }
-  }
-
-  Future<void> _getCurrentLocationAndMarker() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-
-      if (mounted) { // ADDED mounted check
-        setState(() {
-          _markers.removeWhere(
-            (marker) => marker.markerId.value == 'current_location',
-          );
-          _markers.add(
-            Marker(
-              markerId: const MarkerId('current_location'),
-              position: currentLatLng,
-              infoWindow: const InfoWindow(title: 'Your Location'),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueAzure,
-              ),
-            ),
-          );
-        });
-      }
-
-      _mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
-      AuthManager().sendLocation(
-        currentLatLng,
-      );
-    } catch (e) {
-      print('Error getting location: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not get current location.')),
-        );
-      }
-    }
-  }
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+      getCurrentLocationAndMarker(_markers, _mapController, context);
+  setState(() {});
   }
 
   void _onItemTapped(int index) {
@@ -248,7 +175,10 @@ class _DashboardState extends State<Dashboard> {
             onInsightAdded: _addNewInsight, // Pass the callback to add new insight
           );
         },
-        onMyLocationPressed: _getCurrentLocationAndMarker,
+          onMyLocationPressed: () async {
+    await getCurrentLocationAndMarker(_markers, _mapController, context);
+    setState(() {});
+  },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
