@@ -41,7 +41,7 @@ class _DashboardState extends State<Dashboard> {
     ChatMessage(
       sender: 'Zole Laverne',
       message:
-          '“Ig 6PM juseyo, expect traffic sa Escariomida. Sakay nalang sa other side then walk to Ayala. Arraseo?”',
+          '"Ig 6PM juseyo, expect traffic sa Escariomida. Sakay nalang sa other side then walk to Ayala. Arraseo?"',
       route: 'Escario',
       timeAgo: '2 days ago',
       imageUrl:
@@ -52,7 +52,7 @@ class _DashboardState extends State<Dashboard> {
     ChatMessage(
       sender: 'Charisse Pempengco',
       message:
-          '“Na agaw mog agi likod sa CDU kai na.... naay d mahimutang. Naa sya ddto mag atang”',
+          '"Na agaw mog agi likod sa CDU kai na.... naay d mahimutang. Naa sya ddto mag atang"',
       route: 'Cebu Doc',
       timeAgo: '6 days ago',
       imageUrl:
@@ -63,7 +63,7 @@ class _DashboardState extends State<Dashboard> {
     ChatMessage(
       sender: 'Kyline Alcantara',
       message:
-          '“Kuyaw kaaio sa Carbon. Naay nangutana nako ug wat nafen vela? why u crying again? unya nikanta ug thousand years.... kuyawa sa mga adik rn...”',
+          '"Kuyaw kaaio sa Carbon. Naay nangutana nako ug wat nafen vela? why u crying again? unya nikanta ug thousand years.... kuyawa sa mga adik rn..."',
       route: 'Carbon',
       timeAgo: '9 days ago',
       imageUrl:
@@ -74,7 +74,7 @@ class _DashboardState extends State<Dashboard> {
     ChatMessage(
       sender: 'Adopted Brother ni Mikha Lim',
       message:
-          '“Ang plete kai tag 12 pesos pero ngano si kuya driver nangayo ug 15 pesos? SMACK THAT.”',
+          '"Ang plete kai tag 12 pesos pero ngano si kuya driver nangayo ug 15 pesos? SMACK THAT."',
       route: 'Lahug – Carbon',
       timeAgo: 'Just Now',
       imageUrl:
@@ -84,7 +84,7 @@ class _DashboardState extends State<Dashboard> {
     ChatMessage(
       sender: 'Unknown',
       message:
-          '“Shortcut to terminal: cut through Gaisano Mall ground floor!!!!!!”',
+          '"Shortcut to terminal: cut through Gaisano Mall ground floor!!!!!!"',
       route: 'Puente',
       timeAgo: '1 week ago',
       imageUrl:
@@ -92,7 +92,6 @@ class _DashboardState extends State<Dashboard> {
       dislikes: 7,
     ),
   ];
-
 
   @override
   void initState() {
@@ -102,23 +101,23 @@ class _DashboardState extends State<Dashboard> {
     _otherUserLocationSubscription = AuthManager().otherUserLocationStream
         .listen((location) {
           if (mounted) { // ADDED mounted check
-          updateOtherUserMarker(
-            _markers,
-            location,
-            AuthManager().otherUser?.fullName,
-          );
-          setState(() {});
-    }
+            updateOtherUserMarker(
+              _markers,
+              location,
+              AuthManager().otherUser?.fullName,
+            );
+            setState(() {});
+          }
         });
 
     if (AuthManager().otherUser != null &&
         AuthManager().otherUser!.currentLocation != null) {
-    addMarker(
-      _markers,
-      AuthManager().otherUser!.currentLocation!,
-      'other_user_location',
-      AuthManager().otherUser!.fullName,
-    );
+      addMarker(
+        _markers,
+        AuthManager().otherUser!.currentLocation!,
+        'other_user_location',
+        AuthManager().otherUser!.fullName,
+      );
     }
   }
 
@@ -128,38 +127,86 @@ class _DashboardState extends State<Dashboard> {
     super.dispose();
   }
 
-
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-      getCurrentLocationAndMarker(_markers, _mapController, context);
-  setState(() {});
+    // Use a safer approach for async operations after widget creation
+    getCurrentLocationAndMarker(_markers, _mapController, context).then((_) {
+      if (mounted) { // Check if widget is still mounted before calling setState
+        setState(() {});
+      }
+    }).catchError((error) {
+      // Handle any errors gracefully
+      print('Error in getCurrentLocationAndMarker: $error');
+    });
   }
 
   void _onItemTapped(int index) {
-    if (mounted) { // ADDED mounted check
-      setState(() {
-        _selectedIndex = index;
-        print('Selected index: $_selectedIndex');
-      });
-    }
+    if (!mounted) return; // Early return if not mounted
+    setState(() {
+      _selectedIndex = index;
+      print('Selected index: $_selectedIndex');
+    });
   }
 
-  
-
   void _onCommunityInsightExpansionChanged(bool isExpanded) {
-    if (mounted) { // ADDED mounted check
-      setState(() {
-        _isCommunityInsightExpanded = isExpanded;
-      });
-    }
+    if (!mounted) return; // Early return if not mounted
+    setState(() {
+      _isCommunityInsightExpanded = isExpanded;
+    });
   }
 
   // Callback for when a new insight is added from the modal
   void _addNewInsight(ChatMessage newInsight) {
-    if (mounted) { // ADDED mounted check, crucial for callbacks from modals
-      setState(() {
-        _chatMessages.insert(0, newInsight);
-      });
+    if (!mounted) return; // Early return if not mounted
+    setState(() {
+      _chatMessages.insert(0, newInsight);
+    });
+  }
+
+  // Safe method to handle async location updates
+  Future<void> _handleMyLocationPressed() async {
+    if (!mounted) return; // Check before starting async operation
+    
+    try {
+      await getCurrentLocationAndMarker(_markers, _mapController, context);
+      if (mounted) { // Check again after async operation
+        setState(() {});
+      }
+    } catch (error) {
+      print('Error getting current location: $error');
+      // Optionally show a snackbar or handle the error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to get current location')),
+        );
+      }
+    }
+  }
+
+  // Safe method to handle search place selection
+  Future<void> _handlePlaceSelected(dynamic item) async {
+    if (!mounted) return; // Check before starting async operation
+    
+    print('Calling showRoute with: $item');
+    try {
+      await showRoute(
+        item: item,
+        apiKey: "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc",
+        markers: _markers,
+        polylines: _polylines,
+        mapController: _mapController,
+        context: context,
+      );
+      if (mounted) { // Check again after async operation
+        setState(() {});
+      }
+    } catch (error) {
+      print('Error in showRoute: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to show route')),
+        );
+      }
     }
   }
 
@@ -169,16 +216,14 @@ class _DashboardState extends State<Dashboard> {
       floatingActionButton: FloatingButton(
         isCommunityInsightExpanded: _isCommunityInsightExpanded,
         onAddInsightPressed: () {
+          if (!mounted) return; // Safety check
           // Call your new showAddInsightModal function
           showAddInsightModal(
             context: context,
             onInsightAdded: _addNewInsight, // Pass the callback to add new insight
           );
         },
-          onMyLocationPressed: () async {
-    await getCurrentLocationAndMarker(_markers, _mapController, context);
-    setState(() {});
-  },
+        onMyLocationPressed: _handleMyLocationPressed, // Use the safe method
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
@@ -211,19 +256,8 @@ class _DashboardState extends State<Dashboard> {
             ),
 
             SearchBar(
-                onPlaceSelected: (item) async {
-                  print('Calling showRoute with: $item');
-                  await showRoute(
-                    item: item,
-                    apiKey: "AIzaSyAJP6e_5eBGz1j8b6DEKqLT-vest54Atkc",
-                    markers: _markers,
-                    polylines: _polylines,
-                    mapController: _mapController,
-                    context: context,
-                  );
-                  setState(() {});
-          },
-        ),
+              onPlaceSelected: _handlePlaceSelected, // Use the safe method
+            ),
           ],
         ),
       ),
