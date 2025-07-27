@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:zapac/models/favorite_route.dart';
@@ -42,7 +43,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     _polylines.add(
       Polyline(
         polylineId: const PolylineId('route'),
-        color: Theme.of(context).colorScheme.primary,
+        color: const Color(0xFF4A6FA5),
         points: widget.route.polylinePoints,
         width: 5,
       )
@@ -58,26 +59,26 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final Color sheetBackgroundColor = theme.cardColor;
-    final Color textColor = cs.onSurface;
-    final Color handleColor = cs.onSurface.withOpacity(0.4);
+    final Brightness brightness = Theme.of(context).brightness;
+    final Color sheetBackgroundColor = brightness == Brightness.dark ? Colors.grey[850]! : Colors.white;
+    final Color textColor = brightness == Brightness.dark ? Colors.white : Colors.black;
+    final Color handleColor = brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[400]!;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: cs.primary,
+        // Use theme's AppBar background color
+        backgroundColor: const Color.fromARGB(255, 109, 168, 155), // Example color, adjust as needed
         elevation: 0,
         leading: BackButton(
-          color: cs.onPrimary,
+          color: Colors.white, // Keep white for contrast on dark grey or blue background
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         title: Text(
           widget.route.routeName,
-          style: TextStyle(
-            color: cs.onPrimary,
+          style: const TextStyle(
+            color: Colors.white // Keep white for contrast
           ),
         ),
         centerTitle: true,
@@ -140,7 +141,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
                             ),
                             const SizedBox(height: 10),
-                            Divider(color: cs.onSurface.withOpacity(0.12)),
+                            const Divider(),
                             const SizedBox(height: 10),
                             _buildRouteInfoRow(
                               icon: Icons.trip_origin,
@@ -156,7 +157,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                               textColor: textColor,
                             ),
                             const SizedBox(height: 15),
-                            Divider(color: cs.onSurface.withOpacity(0.12)),
+                            const Divider(),
                             const SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -184,13 +185,13 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
+        Icon(icon, color: const Color(0xFF6CA89A), size: 28), // This icon color is still hardcoded
         const SizedBox(width: 15),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+              Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
               Text(content, style: TextStyle(fontSize: 16, color: textColor)),
             ],
           ),
@@ -202,7 +203,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   Widget _buildStatColumn(String label, String value, Color textColor) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
         const SizedBox(height: 5),
         Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
       ],
