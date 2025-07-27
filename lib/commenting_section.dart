@@ -224,6 +224,8 @@ class _CommentingSectionState extends State<CommentingSection> {
   }
 
   Widget _buildInsightCard(ChatMessage message, int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
@@ -241,19 +243,21 @@ class _CommentingSectionState extends State<CommentingSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Updated: sender and "Most Helpful" right-aligned
                     Row(
                       children: [
-                        Text(
-                          message.sender,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        Expanded(
+                          child: Text(
+                            message.sender,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
                         ),
                         if (message.isMostHelpful)
                           Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6CA89A).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
@@ -267,7 +271,7 @@ class _CommentingSectionState extends State<CommentingSection> {
                               ),
                             ),
                           ),
-                        const Spacer(),
+                        // Menu button stays at the far right
                         GestureDetector(
                           onTapDown: (details) async {
                             final RenderBox overlay =
@@ -326,9 +330,6 @@ class _CommentingSectionState extends State<CommentingSection> {
                               );
                               if (confirm == true) {
                                 if (mounted) {
-                                  // This will directly modify the list passed from parent.
-                                  // For a robust solution, consider a callback to Dashboard
-                                  // to allow Dashboard to manage its own list mutations.
                                   setState(() {
                                     widget.chatMessages.removeAt(index);
                                   });
@@ -341,19 +342,28 @@ class _CommentingSectionState extends State<CommentingSection> {
                               }
                             }
                           },
-                          child: const Icon(
+                          child: Icon(
                             Icons.more_horiz,
-                            color: Colors.grey,
+                            color: Theme.of(context).dividerColor,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(message.message, style: const TextStyle(fontSize: 14)),
+                    Text(
+                      message.message,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Route: ${message.route}  |  ${message.timeAgo}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      style: TextStyle(
+                        color: textTheme.bodySmall?.color,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -374,13 +384,13 @@ class _CommentingSectionState extends State<CommentingSection> {
                         message.isLiked
                             ? Icons.thumb_up
                             : Icons.thumb_up_alt_outlined,
-                        color: message.isLiked ? Colors.blue : Colors.grey,
+                        color: message.isLiked ? Colors.blue : Theme.of(context).dividerColor,
                         size: 20,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         message.likes.toString(),
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -394,13 +404,13 @@ class _CommentingSectionState extends State<CommentingSection> {
                         message.isDisliked
                             ? Icons.thumb_down
                             : Icons.thumb_down_alt_outlined,
-                        color: message.isDisliked ? Colors.red : Colors.grey,
+                        color: message.isDisliked ? Colors.red : Theme.of(context).dividerColor,
                         size: 20,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         message.dislikes.toString(),
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -415,34 +425,45 @@ class _CommentingSectionState extends State<CommentingSection> {
 
   Widget _buildFilterChip(String label) {
     final bool isSelected = _selectedFilter == label;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (mounted) {
-          if (selected) {
-            setState(() {
-              _selectedFilter = label;
-            });
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: ChoiceChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        selected: isSelected,
+        onSelected: (selected) {
+          if (mounted && selected) {
+            setState(() => _selectedFilter = label);
           }
-        }
-      },
-      backgroundColor: Colors.white,
-      selectedColor: const Color(0xFF6CA89A),
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.black54,
-        fontWeight: FontWeight.w500,
+        },
+        backgroundColor: const Color(0xFF6CA89A).withOpacity(0.5),
+        selectedColor: const Color(0xFF4A6FA5),
+        // labelStyle removed, as label Text widget now handles style
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide.none,
+        ),
+        showCheckmark: isSelected,
+        checkmarkColor: Colors.white,
+        avatar: isSelected
+            ? const Icon(Icons.check, size: 16, color: Colors.white)
+            : null,
       ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFF6CA89A)),
-      ),
-      showCheckmark: false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DraggableScrollableSheet(
       controller: _sheetController,
       initialChildSize: 0.35,
@@ -450,13 +471,13 @@ class _CommentingSectionState extends State<CommentingSection> {
       maxChildSize: 0.85,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: colorScheme.background,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 10,
@@ -466,81 +487,73 @@ class _CommentingSectionState extends State<CommentingSection> {
           ),
           child: Column(
             children: [
+              // --- Header: Only the colored bar with title, no extra top bar ---
               Container(
-                padding: const EdgeInsets.only(top: 8, bottom: 12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF4BE6C),
-                  borderRadius: BorderRadius.only(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFFDBA252)
+                      : const Color(0xFFF4BE6C),
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
                   ),
                 ),
                 child: Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.black : Colors.black,
+                        fontFamily: 'Roboto',
                       ),
-                      RichText(
-                        text: const TextSpan(
+                      children: [
+                        const TextSpan(text: 'Taga '),
+                        TextSpan(
+                          text: 'ZAPAC',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w900,
+                            color: colorScheme.primary,
                           ),
-                          children: [
-                            TextSpan(text: 'Taga '),
-                            TextSpan(
-                              text: 'ZAPAC',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF4A6FA5),
-                              ),
-                            ),
-                            TextSpan(text: ' says...'),
-                          ],
                         ),
-                      ),
-                    ],
+                        const TextSpan(text: ' says...'),
+                      ],
+                    ),
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   vertical: 8.0,
-                  horizontal: 16.0,
+                  horizontal: 0.0,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildFilterChip('All'),
-                    _buildFilterChip('Warning'),
-                    _buildFilterChip('Shortcuts'),
-                    _buildFilterChip('Fare Tips'),
-                  ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      _buildFilterChip('All'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Warning'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Shortcuts'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Fare Tips'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Driver Reviews'),
+                    ],
+                  ),
                 ),
               ),
-              const Divider(height: 1, color: Colors.black12),
+              Divider(height: 1, color: Theme.of(context).dividerColor),
               Expanded(
-                child: ListView.separated(
+                child: ListView.builder(
                   controller: scrollController,
                   itemCount: widget.chatMessages.length, // MODIFIED: Use widget.chatMessages
                   itemBuilder: (context, index) {
                     return _buildInsightCard(widget.chatMessages[index], index); // MODIFIED: Use widget.chatMessages
                   },
-                  separatorBuilder: (context, index) => const Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Colors.black12,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
                 ),
               ),
             ],
