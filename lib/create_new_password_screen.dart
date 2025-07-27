@@ -15,24 +15,112 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  String _errorMessage = ''; // State variable for general error message (from button press)
+  static const double _errorMessageHeight = 30.0; // Fixed height for error message
+
+  // NEW: State variables for real-time password validation feedback
+  bool _isPasswordLengthValid = false;
+  bool _doPasswordsMatch = false; // For real-time feedback on confirm password
+  String? _passwordFieldHintText; // For real-time password length hint/error
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listener to password field for real-time validation
+    passwordController.addListener(_validatePasswordField);
+    confirmPasswordController.addListener(_validateConfirmPasswordField);
+  }
+
+  @override
+  void dispose() {
+    passwordController.removeListener(_validatePasswordField); // Remove listener
+    confirmPasswordController.removeListener(_validateConfirmPasswordField); // Remove listener
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  // NEW: Real-time password validation logic
+  void _validatePasswordField() {
+    final password = passwordController.text;
+    setState(() {
+      if (password.isEmpty) {
+        _isPasswordLengthValid = false;
+        _passwordFieldHintText = null; // No hint if empty
+      } else if (password.length < 8) {
+        _isPasswordLengthValid = false;
+        _passwordFieldHintText = "Must be at least 8 characters.";
+      } else {
+        _isPasswordLengthValid = true;
+        _passwordFieldHintText = null; // Clear hint if valid
+      }
+      // Also re-check confirm password if password changes
+      _validateConfirmPasswordField();
+    });
+  }
+
+  // NEW: Real-time confirm password validation logic
+  void _validateConfirmPasswordField() {
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+    setState(() {
+      if (confirmPassword.isEmpty) {
+        _doPasswordsMatch = false; // Cannot match if empty
+      } else if (password == confirmPassword) {
+        _doPasswordsMatch = true;
+      } else {
+        _doPasswordsMatch = false;
+      }
+    });
+  }
+
+  void _resetPassword() {
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    setState(() {
+      _errorMessage = ''; // Clear previous general error messages
+    });
+
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      setState(() {
+        _errorMessage = "Password fields cannot be empty.";
+      });
+      return;
+    }
+
+    // If all validations pass, clear general error and proceed
+    setState(() {
+      _errorMessage = ''; // Clear general error on success
+    });
+
+    // Proceed with password reset logic (e.g., call an AuthManager method)
+    // For now, it navigates back to AuthScreen
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
+        preferredSize: const Size.fromHeight(80),
         child: ClipRRect(
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(60),
             bottomRight: Radius.circular(60),
           ),
           child: AppBar(
-            backgroundColor: Color(0xFF4A6FA5),
+            backgroundColor: const Color(0xFF4A6FA5),
             toolbarHeight: 100,
             automaticallyImplyLeading: false,
             leadingWidth: 500,
             leading: GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(width: 40),
@@ -56,8 +144,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
         padding: const EdgeInsets.all(40),
         child: ListView(
           children: [
-            SizedBox(height: 30),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               "Create New",
               style: TextStyle(
                 fontSize: 32,
@@ -65,7 +153,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 color: Color(0xFF6CA89A),
               ),
             ),
-            Text(
+            const Text(
               "Password",
               style: TextStyle(
                 fontSize: 32,
@@ -73,23 +161,38 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 color: Color(0xFF6CA89A),
               ),
             ),
-            SizedBox(height: 10),
-            Text(
+            const SizedBox(height: 10),
+            const Text(
               "Your new password must be different from previous used passwords.",
               style: TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 30),
-            Text("  Password", style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+            const Text("  Password", style: TextStyle(fontSize: 16)),
             TextField(
               controller: passwordController,
               obscureText: _obscurePassword,
+              // NEW: onChanged listener for real-time validation feedback
+              // onChanged: (value) => _validatePasswordField(), // Listener already added in initState
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Color(0xFFF3EEE6),
+                fillColor: const Color(0xFFF3EEE6),
                 hintText: 'Enter Password',
-                border: OutlineInputBorder(
+                // NEW: Dynamic border color
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(
+                    color: passwordController.text.isNotEmpty && !_isPasswordLengthValid
+                        ? Colors.red // Red if invalid and not empty
+                        : Colors.transparent, // Transparent for default state (or a subtle grey)
+                    width: 1.5, // Make border slightly visible
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: _isPasswordLengthValid ? Colors.blue : Colors.red, // Blue if valid, Red if invalid
+                    width: 2.0, // Thicker border when focused
+                  ),
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -104,23 +207,47 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 5),
-            Text(
-              "   Must be at least 8 characters.",
-              style: TextStyle(fontSize: 12.5),
+            // NEW: Real-time password length hint/error
+            SizedBox(
+              height: _passwordFieldHintText != null ? 20.0 : 0, // Reserve height if hint exists
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0), // Adjust padding
+                  child: Text(
+                    _passwordFieldHintText ?? '',
+                    style: const TextStyle(fontSize: 12.5, color: Colors.red), // Red for error hint
+                  ),
+                ),
+              ),
             ),
-            SizedBox(height: 20),
-            Text("  Confirm Password", style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+            const Text("  Confirm Password", style: TextStyle(fontSize: 16)),
             TextField(
               controller: confirmPasswordController,
               obscureText: _obscureConfirmPassword,
+              // NEW: onChanged listener for real-time validation feedback
+              // onChanged: (value) => _validateConfirmPasswordField(), // Listener already added in initState
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Color(0xFFF3EEE6),
+                fillColor: const Color(0xFFF3EEE6),
                 hintText: 'Enter New Password',
-                border: OutlineInputBorder(
+                // NEW: Dynamic border color based on match
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(
+                    color: confirmPasswordController.text.isNotEmpty && !_doPasswordsMatch
+                        ? Colors.red // Red if not matching and not empty
+                        : Colors.transparent, // Transparent for default state
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: _doPasswordsMatch ? Colors.blue : Colors.red, // Blue if match, Red if not
+                    width: 2.0,
+                  ),
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -135,30 +262,44 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 5),
-            Text(
-              "   Both passwords must match.",
-              style: TextStyle(fontSize: 12.5),
+            // NEW: Real-time confirm password hint/error
+            SizedBox(
+              height: confirmPasswordController.text.isNotEmpty && !_doPasswordsMatch ? 20.0 : 0, // Reserve height if hint exists
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0), // Adjust padding
+                  child: Text(
+                    confirmPasswordController.text.isNotEmpty && !_doPasswordsMatch ? "Passwords do not match." : "",
+                    style: const TextStyle(fontSize: 12.5, color: Colors.red), // Red for error hint
+                  ),
+                ),
+              ),
             ),
-            SizedBox(height: 25),
+            // General error message (from button press, fixed height)
+            SizedBox(
+              height: _errorMessageHeight + 20,
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  _errorMessage,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15 - _errorMessageHeight < 0 ? 0 : 15 - _errorMessageHeight),
             Center(
               child: ElevatedButton(
-                // MODIFIED: This is the corrected navigation logic
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AuthScreen()),
-                    (Route<dynamic> route) => false,
-                  );
-                },
+                onPressed: _resetPassword,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF6CA89A),
-                  padding: EdgeInsets.symmetric(horizontal: 110, vertical: 17),
+                  backgroundColor: const Color(0xFF6CA89A),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 17),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   "Reset Password",
                   style: TextStyle(
                       fontSize: 15,
@@ -172,7 +313,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
       ),
       bottomNavigationBar: Container(
         height: 80,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Color(0xFF4A6FA5),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(60),

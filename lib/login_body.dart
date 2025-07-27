@@ -44,15 +44,27 @@ class _LoginBodyState extends State<LoginBody> {
 
     if (!mounted) return;
     if (success) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login successful!'),
+        SnackBar(
+          content: const Center(
+            child: Text(
+              'Login successful!',
+              textAlign: TextAlign.center,
+            ),
+          ),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(milliseconds: 700),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 25.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          elevation: 6.0, // Add elevation
         ),
       );
 
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(seconds: 1), () {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const Dashboard()),
@@ -63,15 +75,34 @@ class _LoginBodyState extends State<LoginBody> {
     }
   }
 
+  void _showComingSoonSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Center(
+          child: Text(
+            'This feature is coming soon!',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        duration: const Duration(seconds: 1),
+        backgroundColor: Colors.blueAccent,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 25.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        elevation: 6.0,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get screen height for responsive sizing
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Adjusted: Even further reduced spacing factors
-    final double verticalSpacing = screenHeight * 0.012; // Adjusted for tighter spacing
-    final double buttonSpacing = screenHeight * 0.018;    // Adjusted for tighter spacing
-    final double errorHeight = screenHeight * 0.03;       // Remains 3% for error message clarity
+    final double verticalSpacing = screenHeight * 0.012;
+    final double buttonSpacing = screenHeight * 0.018;
+    final double errorHeight = screenHeight * 0.05;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
@@ -83,7 +114,7 @@ class _LoginBodyState extends State<LoginBody> {
             child: Text(
               "Welcome Back!",
               style: TextStyle(
-                fontSize: 26, // Adjusted: Reduced font size from 30 to 26
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF6CA89A),
               ),
@@ -107,7 +138,7 @@ class _LoginBodyState extends State<LoginBody> {
             ),
             keyboardType: TextInputType.emailAddress,
           ),
-          SizedBox(height: verticalSpacing),
+          SizedBox(height: verticalSpacing * 2),
           const Text("   Password", style: TextStyle(fontSize: 16)),
           TextField(
             controller: passwordController,
@@ -145,7 +176,7 @@ class _LoginBodyState extends State<LoginBody> {
               style: const TextStyle(color: Colors.red, fontSize: 14),
             ),
           ),
-          SizedBox(height: buttonSpacing),
+          SizedBox(height: buttonSpacing * 0.015),
 
           ElevatedButton(
             onPressed: _handleLogin,
@@ -167,7 +198,7 @@ class _LoginBodyState extends State<LoginBody> {
             ),
           ),
 
-          SizedBox(height: verticalSpacing * 2), // Existing spacing after login button
+          SizedBox(height: verticalSpacing * 1.5),
           Center(
             child: RichText(
               text: TextSpan(
@@ -182,7 +213,7 @@ class _LoginBodyState extends State<LoginBody> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ResetPasswordScreen(),
+                            builder: (context) => const ResetPasswordScreen(),
                           ),
                         );
                       },
@@ -191,7 +222,6 @@ class _LoginBodyState extends State<LoginBody> {
               ),
             ),
           ),
-
           SizedBox(height: verticalSpacing * 1.5),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -210,7 +240,7 @@ class _LoginBodyState extends State<LoginBody> {
               ],
             ),
           ),
-          SizedBox(height: verticalSpacing * 1),
+          SizedBox(height: verticalSpacing * 1.5),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -218,7 +248,7 @@ class _LoginBodyState extends State<LoginBody> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: _showComingSoonSnackBar,
                     icon: const Icon(Icons.g_mobiledata, color: Colors.white),
                     label: const Text(
                       "Google",
@@ -239,7 +269,7 @@ class _LoginBodyState extends State<LoginBody> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: _showComingSoonSnackBar,
                     icon: const Icon(Icons.facebook, color: Colors.blue),
                     label: const Text(
                       "Facebook",

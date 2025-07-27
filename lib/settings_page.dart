@@ -18,7 +18,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final String _userEmail = 'charisjmn@gmail.com';
   final String _userName = 'Charisse Jamien T';
   final String _userStatus = 'Daily Commuter';
-  final String _userProfileImageUrl = 'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg';
+  final String _userProfileImageUrl = 'https://plus.unsplash.com/premium_vector-1744196876628-cdd656d88ed3?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=500&h=500&fit=crop';
 
   static const Color primaryColor = Color(0xFF4A6FA5);
   static const Color greenButtonColor = Color(0xFF6CA89A);

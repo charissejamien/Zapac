@@ -4,7 +4,7 @@ enum UserType { commuter, driver, admin }
 
 class User {
   final String email;
-  final String password;  
+  final String password;
   String firstName;
   String? middleName;
   String lastName;
