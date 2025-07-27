@@ -57,13 +57,32 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             brightness: Brightness.light,
             primaryColor: const Color(0xFF4A6FA5),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF4A6FA5),
+              onPrimary: Colors.white,
+              background: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+              secondary: Color(0xFF6CA89A),
+              error: Color(0xFFE97C7C),
+              outlineVariant: Color(0xFFDDDDDD),
+            ),
             // Define other light mode colors
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
-            primaryColor: const Color(0xFF273238), // Changed to #273238 for primary color
-            // Define other dark mode colors
-            appBarTheme: AppBarTheme(color: Colors.grey[900]), // This affects AppBar widgets, not the profile page header container
+            primaryColor: const Color(0xFF273238),
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF273238),
+              onPrimary: Colors.white,
+              background: Color(0xFF121212),
+              surface: Color(0xFF1E1E1E),
+              onSurface: Colors.white,
+              secondary: Color(0xFF9DBEBB),
+              error: Color(0xFFCF6679),
+              outlineVariant: Color(0xFF444444),
+            ),
+            appBarTheme: AppBarTheme(color: Colors.grey),
             scaffoldBackgroundColor: Colors.grey[850],
             cardColor: Colors.grey[800],
             // Add more dark theme specific colors and styles as needed
