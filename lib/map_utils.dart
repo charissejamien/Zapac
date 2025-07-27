@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously, unnecessary_null_comparison
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -19,20 +21,61 @@ void addMarker(Set<Marker> markers, LatLng position, String markerId, String tit
   );
 }
 
-// Get current location and add marker
-Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapController mapController, BuildContext context) async {
+// Get current location and add marker with better error handling
+Future<void> getCurrentLocationAndMarker(
+  Set<Marker> markers,
+  GoogleMapController mapController,
+  BuildContext context, {
+  required bool Function() isMounted,
+}) async {
+  // Check if the context is still valid before starting
+  if (!isMounted()) {
+    print('Context is not mounted, aborting getCurrentLocationAndMarker');
+    return;
+  }
+
+  // First, check if location services are enabled
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled, don't continue
+    if (isMounted()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Location services are disabled. Please enable them.'),
+          action: SnackBarAction(
+            label: 'Open Settings',
+            onPressed: () async {
+              await Geolocator.openLocationSettings();
+            },
+          ),
+        ),
+      );
+    }
+    return;
+  }
+
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location permission denied. Please enable location permissions in settings.')),
-      );
+      if (isMounted()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permission denied. Please enable location permissions in settings.')),
+        );
+      }
       return;
     }
   }
+
   try {
     Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    
+    // Check if context is still mounted after async operation
+    if (!isMounted()) {
+      print('Context is no longer mounted after getting position');
+      return;
+    }
+    
     LatLng currentLatLng = LatLng(position.latitude, position.longitude);
     markers.removeWhere((marker) => marker.markerId.value == 'current_location');
     markers.add(
@@ -43,12 +86,18 @@ Future<void> getCurrentLocationAndMarker(Set<Marker> markers, GoogleMapControlle
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
       ),
     );
-    mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+    
+    // Check if context is still mounted before animating camera
+    if (isMounted()) {
+      mapController.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+    }
   } catch (e) {
     print('Error getting location: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not get current location.')),
-    );
+    if (isMounted()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not get current location.')),
+      );
+    }
   }
 }
 
@@ -68,18 +117,24 @@ void updateOtherUserMarker(Set<Marker> markers, LatLng newLocation, String? full
 // Get predictions from Google Places Autocomplete
 Future<List<dynamic>> getPredictions(String input, String apiKey) async {
   if (input.isEmpty) return [];
-  final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:ph';
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return data['predictions'];
-  } else {
-    print('Failed to load predictions: ${response.statusCode}');
+  
+  try {
+    final url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:ph';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['predictions'];
+    } else {
+      print('Failed to load predictions: ${response.statusCode}');
+      return [];
+    }
+  } catch (e) {
+    print('Error getting predictions: $e');
     return [];
   }
 }
 
-// Show route on the map
+// Show route on the map with better error handling
 Future<Map<String, dynamic>> showRoute({
   required dynamic item,
   required String apiKey,
@@ -88,130 +143,197 @@ Future<Map<String, dynamic>> showRoute({
   required GoogleMapController mapController,
   required BuildContext context,
 }) async {
+  print('showRoute called with item: $item');
+  
+  // Check if context is mounted at the start
+  if (!context.mounted) {
+    print('Context is not mounted, aborting showRoute');
+    return {};
+  }
+  
   LatLng? destinationLatLng;
   String destinationName = '';
-  if (item.containsKey('place')) {
-    final placeId = item['place']['place_id'];
-    destinationName = item['place']['description'];
-    final url = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final location = data['result']['geometry']['location'];
-      destinationLatLng = LatLng(location['lat'], location['lng']);
-    } else {
-      print('Failed to get place details: ${response.statusCode}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to get destination details.')),
-      );
-      return {};
-    }
-  } else if (item.containsKey('route')) {
-    FavoriteRoute route = item['route'];
-    destinationLatLng = LatLng(route.latitude, route.longitude);
-    destinationName = route.routeName;
-  }
-  if (destinationLatLng != null) {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permission denied. Please enable location permissions in settings.')),
-        );
+  
+  try {
+    if (item.containsKey('place')) {
+      final placeId = item['place']['place_id'];
+      destinationName = item['place']['description'];
+      final url = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
+      final response = await http.get(Uri.parse(url));
+      
+      if (!context.mounted) return {}; // Check after async operation
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final location = data['result']['geometry']['location'];
+        destinationLatLng = LatLng(location['lat'], location['lng']);
+      } else {
+        print('Failed to get place details: ${response.statusCode}');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to get destination details.')),
+          );
+        }
         return {};
       }
+    } else if (item.containsKey('route')) {
+      FavoriteRoute route = item['route'];
+      destinationLatLng = LatLng(route.latitude, route.longitude);
+      destinationName = route.routeName;
     }
+    
+    if (destinationLatLng != null && context.mounted) {
+      // Check if location services are enabled before proceeding with routing
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Location services are disabled. Please enable them to show a route.'),
+              action: SnackBarAction(
+                label: 'Open Settings',
+                onPressed: () async {
+                  await Geolocator.openLocationSettings();
+                },
+              ),
+            ),
+          );
+        }
+        return {};
+      }
 
-    // --- FIX: Add try-catch for getting current location ---
-    LatLng? originLatLng;
-    try {
-      Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      originLatLng = LatLng(currentPosition.latitude, currentPosition.longitude);
-    } catch (e) {
-      print('Error getting current location for routing: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not get your current location for routing. Please ensure GPS is on.')),
-      );
-      return {}; // Return empty if current location cannot be obtained
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Location permission denied. Please enable location permissions in settings.')),
+            );
+          }
+          return {};
+        }
+      }
 
-    if (originLatLng == null) {
+      LatLng? originLatLng;
+      try {
+        Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        
+        if (!context.mounted) return {}; // Check after async operation
+        
+        originLatLng = LatLng(currentPosition.latitude, currentPosition.longitude);
+      } catch (e) {
+        print('Error getting current location for routing: $e');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not get your current location for routing. Please ensure GPS is on.')),
+          );
+        }
+        return {}; // Return empty if current location cannot be obtained
+      }
+
+      if (originLatLng == null || !context.mounted) {
+        return {};
+      }
+
+      // Use Directions API HTTP request
+      String url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${originLatLng.latitude},${originLatLng.longitude}&destination=${destinationLatLng.latitude},${destinationLatLng.longitude}&key=$apiKey';
+      var response = await http.get(Uri.parse(url));
+
+      if (!context.mounted) return {}; // Check after async operation
+
+      if (response.statusCode == 200) {
+        var decoded = json.decode(response.body);
+        if (decoded['routes'].isEmpty) {
+          print('No routes found in Directions API response.');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No route found.')),
+            );
+          }
+          return {};
+        }
+        
+        final routeData = decoded['routes'][0];
+        final leg = routeData['legs'][0];
+        final startLatLng = leg['start_location'];
+        final endLatLng = leg['end_location'];
+
+        markers.clear();
+        markers.add(Marker(
+          markerId: const MarkerId('start'),
+          position: LatLng(startLatLng['lat'], startLatLng['lng']),
+          infoWindow: const InfoWindow(title: 'Start'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        ));
+        markers.add(Marker(
+          markerId: const MarkerId('end'),
+          position: LatLng(endLatLng['lat'], endLatLng['lng']),
+          infoWindow: InfoWindow(title: destinationName),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        ));
+
+        List<PointLatLng> polylineCoordinates = PolylinePoints().decodePolyline(routeData['overview_polyline']['points']);
+        List<LatLng> latLngList = polylineCoordinates.map((point) => LatLng(point.latitude, point.longitude)).toList();
+
+        polylines.clear();
+        polylines.add(
+          Polyline(
+            polylineId: const PolylineId('route'),
+            color: Colors.blue,
+            points: latLngList,
+            width: 5,
+          ),
+        );
+
+        if (context.mounted) {
+          mapController.animateCamera(CameraUpdate.newLatLngBounds(
+            LatLngBounds(
+              southwest: LatLng(
+                latLngList.map((p) => p.latitude).reduce((a, b) => a < b ? a : b),
+                latLngList.map((p) => p.longitude).reduce((a, b) => a < b ? a : b),
+              ),
+              northeast: LatLng(
+                latLngList.map((p) => p.latitude).reduce((a, b) => a > b ? a : b),
+                latLngList.map((p) => p.longitude).reduce((a, b) => a > b ? a : b),
+              ),
+            ),
+            100.0,
+          ));
+        }
+
+        print('Added polyline with ${latLngList.length} points');
+        print('Polylines count: ${polylines.length}');
+        return {
+          'distance': leg['distance']['text'],
+          'duration': leg['duration']['text'],
+        };
+      } else {
+        print('Failed to get directions: ${response.statusCode}');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to get directions.')),
+          );
+        }
+        return {};
+      }
+    } else {
+      print('Destination LatLng is null. Cannot show route.');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not determine destination location.')),
+        );
+      }
       return {};
     }
-    // --- END FIX ---
-
-    markers.clear();
-    markers.add(
-      Marker(
-        markerId: const MarkerId('destination_marker'),
-        position: destinationLatLng,
-        infoWindow: InfoWindow(title: destinationName),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      ),
-    );
-    // --- FIX: Add a marker for the current location ---
-    markers.add(
-      Marker(
-        markerId: const MarkerId('current_location_marker'),
-        position: originLatLng,
-        infoWindow: const InfoWindow(title: 'Your Current Location'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-      ),
-    );
-    // --- END FIX ---
-
-    if (originLatLng.latitude == destinationLatLng.latitude && originLatLng.longitude == destinationLatLng.longitude) {
-      mapController.animateCamera(CameraUpdate.newLatLngZoom(originLatLng, 15.0));
-    } else {
-      LatLngBounds bounds = LatLngBounds(
-        southwest: LatLng(
-          math.min(originLatLng.latitude, destinationLatLng.latitude),
-          math.min(originLatLng.longitude, destinationLatLng.longitude),
-        ),
-        northeast: LatLng(
-          math.max(originLatLng.latitude, destinationLatLng.latitude),
-          math.max(originLatLng.longitude, destinationLatLng.longitude),
-        ),
-      );
-      mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
-    }
-    PolylinePoints polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      request: PolylineRequest(
-        origin: PointLatLng(originLatLng.latitude, originLatLng.longitude),
-        destination: PointLatLng(destinationLatLng.latitude, destinationLatLng.longitude),
-        mode: TravelMode.driving,
-      ),
-      googleApiKey: apiKey,
-    );
-    polylines.clear();
-    if (result.points.isNotEmpty) {
-      List<LatLng> polylineCoordinates = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
-      polylines.add(
-        Polyline(
-          polylineId: const PolylineId('route'),
-          points: polylineCoordinates,
-          color: Colors.blue,
-          width: 5,
-        ),
-      );
-      return {
-        'distance': 'N/A',
-        'duration': 'N/A',
-      };
-    } else {
-      print('No polyline points found.');
+  } catch (e) {
+    print('Error in showRoute: $e');
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not find a route.')),
+        const SnackBar(content: Text('An error occurred while showing the route.')),
       );
-      return {};
     }
-  } else {
-    print('Destination LatLng is null. Cannot show route.');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not determine destination location.')),
-    );
     return {};
   }
 }

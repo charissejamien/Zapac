@@ -23,6 +23,10 @@ class ThemeNotifier extends ChangeNotifier {
       prefs.setBool('isDarkMode', mode == ThemeMode.dark);
     }
   }
+
+  void setInitialTheme(ThemeMode mode) {
+    _themeMode = mode;
+  }
 }
 
 final ThemeNotifier themeNotifier = ThemeNotifier(ThemeMode.light);
@@ -35,7 +39,7 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
-  themeNotifier.setThemeMode(isDarkMode ? ThemeMode.dark : ThemeMode.light);
+  themeNotifier.setInitialTheme(isDarkMode ? ThemeMode.dark : ThemeMode.light);
 
   runApp(const MyApp());
 }
@@ -53,6 +57,16 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             brightness: Brightness.light,
             primaryColor: const Color(0xFF4A6FA5),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF4A6FA5),
+              onPrimary: Colors.white,
+              background: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+              secondary: Color(0xFF6CA89A),
+              error: Color(0xFFE97C7C),
+              outlineVariant: Color(0xFFDDDDDD),
+            ),
             // Define other light mode colors
             appBarTheme: const AppBarTheme( // <--- Add this AppBarTheme
               color: Color(0xFF4A6FA5), // Set AppBar background to blue in light mode
@@ -61,7 +75,17 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             primaryColor: const Color(0xFF273238),
-            appBarTheme: AppBarTheme(color: Colors.grey[900]),
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF273238),
+              onPrimary: Colors.white,
+              background: Color(0xFF121212),
+              surface: Color(0xFF1E1E1E),
+              onSurface: Colors.white,
+              secondary: Color(0xFF9DBEBB),
+              error: Color(0xFFCF6679),
+              outlineVariant: Color(0xFF444444),
+            ),
+            appBarTheme: AppBarTheme(color: Colors.grey),
             scaffoldBackgroundColor: Colors.grey[850],
             cardColor: Colors.grey[800],
           ),
