@@ -30,7 +30,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
 
     return Container(
-      height: 88,
+      height: 78,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 28),
       decoration: BoxDecoration(

@@ -15,8 +15,8 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 
   // User details (replace with actual user data from your AuthManager or a user model)
-  final String _userEmail = 'kerropiandcinnamon@gmail.com';
-  final String _userName = 'Kerropi';
+  final String _userEmail = 'charisjmn@gmail.com';
+  final String _userName = 'Charisse Jamien T';
   final String _userStatus = 'Daily Commuter';
   final String _userProfileImageUrl = 'https://i.pinimg.com/736x/a7/95/9b/a7959b661c47209214716938a11e8eda.jpg';
 

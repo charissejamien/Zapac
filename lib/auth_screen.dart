@@ -16,7 +16,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(220),
+        preferredSize: Size.fromHeight(180),
         child: ClipRRect(
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(60),
@@ -29,7 +29,7 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset('assets/logo.png', height: 130),
-                SizedBox(height: 40),
+                SizedBox(height:10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -18,13 +18,12 @@ class _LoginBodyState extends State<LoginBody> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  // NEW: Create login function
   Future<void> _handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
     setState(() {
-      _errorMessage = ''; // Clear previous error messages
+      _errorMessage = '';
     });
 
     if (email.isEmpty) {
@@ -41,57 +40,62 @@ class _LoginBodyState extends State<LoginBody> {
       return;
     }
 
-    //call AuthManager to handle login
     bool success = await AuthManager().login(email, password);
 
     if (!mounted) return;
-  if (success) {
-    // show a green SnackBar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login successful!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-
-    // wait a moment so the user sees it, then navigate
-    Future.delayed(const Duration(milliseconds: 500), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const Dashboard()),
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
       );
-    });
-  } else {
-    setState(() => _errorMessage = "Invalid email or password.");
+
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const Dashboard()),
+        );
+      });
+    } else {
+      setState(() => _errorMessage = "Invalid email or password.");
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
+    // Get screen height for responsive sizing
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Adjusted: Even further reduced spacing factors
+    final double verticalSpacing = screenHeight * 0.012; // Adjusted for tighter spacing
+    final double buttonSpacing = screenHeight * 0.018;    // Adjusted for tighter spacing
+    final double errorHeight = screenHeight * 0.03;       // Remains 3% for error message clarity
+
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Center(
+          SizedBox(height: verticalSpacing * 1.5),
+          const Center(
             child: Text(
               "Welcome Back!",
               style: TextStyle(
-                fontSize: 30,
+                fontSize: 26, // Adjusted: Reduced font size from 30 to 26
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF6CA89A),
               ),
             ),
           ),
-          SizedBox(height: 30),
-          Text("   Email", style: TextStyle(fontSize: 16)),
+          SizedBox(height: verticalSpacing * 2),
+          const Text("   Email", style: TextStyle(fontSize: 16)),
           TextField(
             controller: emailController,
-            style: TextStyle(color: Colors.black),
-            cursorColor: Colors.black,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Color(0xFFF3EEE6),
+              fillColor: const Color(0xFFF3EEE6),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide.none,
@@ -101,17 +105,16 @@ class _LoginBodyState extends State<LoginBody> {
                 borderSide: BorderSide.none,
               ),
             ),
+            keyboardType: TextInputType.emailAddress,
           ),
-          SizedBox(height: 30),
-          Text("   Password", style: TextStyle(fontSize: 16)),
+          SizedBox(height: verticalSpacing),
+          const Text("   Password", style: TextStyle(fontSize: 16)),
           TextField(
             controller: passwordController,
             obscureText: _obscurePassword,
-            style: TextStyle(color: Colors.black),
-            cursorColor: Colors.black,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Color(0xFFF3EEE6),
+              fillColor: const Color(0xFFF3EEE6),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide.none,
@@ -123,9 +126,7 @@ class _LoginBodyState extends State<LoginBody> {
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.black
-                      : Colors.black54,
+                  color: Colors.grey[600],
                 ),
                 onPressed: () {
                   setState(() {
@@ -137,26 +138,26 @@ class _LoginBodyState extends State<LoginBody> {
           ),
 
           Container(
-            height: 30,
+            height: errorHeight,
             alignment: Alignment.center,
             child: Text(
               _errorMessage,
-              style: TextStyle(color: Colors.red, fontSize: 14),
+              style: const TextStyle(color: Colors.red, fontSize: 14),
             ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: buttonSpacing),
 
-          // <— Updated to call _handleLogin()
           ElevatedButton(
             onPressed: _handleLogin,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF6CA89A),
-              padding: EdgeInsets.symmetric(vertical: 15),
+              backgroundColor: const Color(0xFF6CA89A),
+              padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              elevation: 0,
             ),
-            child: Text(
+            child: const Text(
               "Login",
               style: TextStyle(
                 color: Colors.black,
@@ -166,20 +167,16 @@ class _LoginBodyState extends State<LoginBody> {
             ),
           ),
 
-          SizedBox(height: 30),
+          SizedBox(height: verticalSpacing * 2), // Existing spacing after login button
           Center(
             child: RichText(
               text: TextSpan(
                 text: "Forgotten your password? ",
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white
-                      : Colors.black,
-                ),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 children: [
                   TextSpan(
                     text: " Reset password",
-                    style: TextStyle(color: Color(0xFFEA4335)),
+                    style: const TextStyle(color: Color(0xFFEA4335)),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
                         Navigator.push(
@@ -194,58 +191,74 @@ class _LoginBodyState extends State<LoginBody> {
               ),
             ),
           ),
-          SizedBox(height: 20),
+
+          SizedBox(height: verticalSpacing * 1.5),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Row(
               children: [
-                Expanded(
-                  child: Divider(
-                    color: Colors.grey,
-                    thickness: 1,
-                    endIndent: 10,
-                  ),
+                const Expanded(
+                  child: Divider(color: Colors.grey, thickness: 1, endIndent: 10),
                 ),
                 Text(
                   "or sign in with",
-                  style: TextStyle(color: Color(0xFF2F2D2A)),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
-                Expanded(
+                const Expanded(
                   child: Divider(color: Colors.grey, thickness: 1, indent: 10),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: verticalSpacing * 1),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.g_mobiledata, color: Colors.white),
-                label: Text(
-                  "Google",
-                  style: TextStyle(fontSize: 14, color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF2E2E2E),
-                  padding: EdgeInsets.symmetric(horizontal: 40),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.g_mobiledata, color: Colors.white),
+                    label: const Text(
+                      "Google",
+                      style: TextStyle(fontSize: 14, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E2E2E),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.facebook, color: Colors.blue),
-                label: Text(
-                  "Facebook",
-                  style: TextStyle(fontSize: 14, color: Colors.black),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 40),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.facebook, color: Colors.blue),
+                    label: const Text(
+                      "Facebook",
+                      style: TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: verticalSpacing),
         ],
       ),
     );

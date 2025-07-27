@@ -52,10 +52,6 @@ class _CommentingSectionState extends State<CommentingSection> {
   bool _isSheetFullyExpanded = false;
   String _selectedFilter = 'All';
 
-  // MODIFIED: _chatMessages is now handled by the parent (Dashboard)
-  // The internal list is removed here as it will be passed via widget.chatMessages.
-  // Original dummy data from here is now in Dashboard.
-
   @override
   void initState() {
     super.initState();
@@ -79,9 +75,9 @@ class _CommentingSectionState extends State<CommentingSection> {
     super.dispose();
   }
 
-  // This _showAddInsightSheet is intended to be the internal modal for CommentingSection.
-  // If the FloatingActionButton in Dashboard calls the separate add_insight_modal.dart,
-  // this method might only be called if CommentingSection itself has another trigger.
+  // MODIFIED: _showAddInsightSheet (removed, as per previous context it's handled by Dashboard)
+  // Re-adding a simple version for the button in case it's still intended for internal use,
+  // but the primary add insight should come from Dashboard's FloatingButton.
   void _showAddInsightSheet() {
     final TextEditingController insightController = TextEditingController();
     final TextEditingController routeController = TextEditingController();
@@ -195,10 +191,11 @@ class _CommentingSectionState extends State<CommentingSection> {
     });
   }
 
+
   void _toggleLike(int index) {
     if (mounted) {
       setState(() {
-        final message = widget.chatMessages[index]; // Use widget.chatMessages
+        final message = _filteredMessages[index]; // Use filtered list
         message.isLiked = !message.isLiked;
         message.likes += message.isLiked ? 1 : -1;
         if (message.isLiked && message.isDisliked) {
@@ -212,7 +209,7 @@ class _CommentingSectionState extends State<CommentingSection> {
   void _toggleDislike(int index) {
     if (mounted) {
       setState(() {
-        final message = widget.chatMessages[index]; // Use widget.chatMessages
+        final message = _filteredMessages[index]; // Use filtered list
         message.isDisliked = !message.isDisliked;
         message.dislikes += message.isDisliked ? 1 : -1;
         if (message.isDisliked && message.isLiked) {
@@ -221,6 +218,50 @@ class _CommentingSectionState extends State<CommentingSection> {
         }
       });
     }
+  }
+
+  // NEW: Filtered messages list
+  List<ChatMessage> get _filteredMessages {
+    if (_selectedFilter == 'All') {
+      return widget.chatMessages;
+    }
+
+    // Convert filter to lowercase for case-insensitive matching
+    final filterLower = _selectedFilter.toLowerCase();
+
+    return widget.chatMessages.where((message) {
+      final messageLower = message.message.toLowerCase();
+      final routeLower = message.route.toLowerCase();
+
+      switch (filterLower) {
+        case 'warning':
+          // Example keywords for warnings
+          return messageLower.contains('traffic') ||
+                 messageLower.contains('danger') ||
+                 messageLower.contains('kuyaw') || // Cebuano for 'dangerous'
+                 messageLower.contains('beware') ||
+                 messageLower.contains('agaw'); // Cebuano for 'snatch'
+        case 'shortcuts':
+          // Example keywords for shortcuts
+          return messageLower.contains('shortcut') ||
+                 messageLower.contains('agi likod') || // Cebuano for 'pass behind'
+                 messageLower.contains('cut through') ||
+                 messageLower.contains('faster route');
+        case 'fare tips':
+          // Example keywords for fare tips
+          return messageLower.contains('plete') || // Cebuano for 'fare'
+                 messageLower.contains('fare') ||
+                 messageLower.contains('pesos') ||
+                 messageLower.contains('piso');
+        case 'driver reviews':
+          // Example keywords for driver reviews (assuming 'driver' or 'kuya' in message)
+          return messageLower.contains('driver') ||
+                 messageLower.contains('kuya driver') || // "Kuya driver" (brother driver)
+                 messageLower.contains('conduct'); // e.g., driver's conduct
+        default:
+          return true; // Should not happen if filter is one of the defined
+      }
+    }).toList();
   }
 
   Widget _buildInsightCard(ChatMessage message, int index) {
@@ -243,7 +284,6 @@ class _CommentingSectionState extends State<CommentingSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Updated: sender and "Most Helpful" right-aligned
                     Row(
                       children: [
                         Expanded(
@@ -271,7 +311,6 @@ class _CommentingSectionState extends State<CommentingSection> {
                               ),
                             ),
                           ),
-                        // Menu button stays at the far right
                         GestureDetector(
                           onTapDown: (details) async {
                             final RenderBox overlay =
@@ -330,8 +369,24 @@ class _CommentingSectionState extends State<CommentingSection> {
                               );
                               if (confirm == true) {
                                 if (mounted) {
+                                  // Call setState to update UI after deletion
                                   setState(() {
-                                    widget.chatMessages.removeAt(index);
+                                    // MODIFIED: Delete from the original list (widget.chatMessages)
+                                    // To do this properly, the parent (Dashboard) should provide
+                                    // a callback to remove the message from its list.
+                                    // For now, removing directly from a copy in _filteredMessages
+                                    // will cause issues if the filter changes later.
+                                    // A better solution would be:
+                                    // 1. Give CommentingSection a callback like `onMessageDeleted(ChatMessage)`
+                                    // 2. Dashboard handles the actual deletion from its `_chatMessages` list
+                                    // For this example, we'll simulate direct removal for simplicity
+                                    // but be aware of this for state management in a larger app.
+
+                                    // Find the original index of the message in the main list
+                                    final originalIndex = widget.chatMessages.indexOf(message);
+                                    if (originalIndex != -1) {
+                                      widget.chatMessages.removeAt(originalIndex);
+                                    }
                                   });
                                 }
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -445,7 +500,6 @@ class _CommentingSectionState extends State<CommentingSection> {
         },
         backgroundColor: const Color(0xFF6CA89A),
         selectedColor: const Color(0xFF4A6FA5),
-        // labelStyle removed, as label Text widget now handles style
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide.none,
@@ -463,6 +517,9 @@ class _CommentingSectionState extends State<CommentingSection> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get the filtered list of messages
+    final List<ChatMessage> currentMessages = _filteredMessages; // NEW: Use filtered messages
+
     return DraggableScrollableSheet(
       controller: _sheetController,
       initialChildSize: 0.35,
@@ -486,7 +543,6 @@ class _CommentingSectionState extends State<CommentingSection> {
           ),
           child: Column(
             children: [
-              // --- Header: Only the colored bar with title, no extra top bar ---
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -549,9 +605,9 @@ class _CommentingSectionState extends State<CommentingSection> {
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
-                  itemCount: widget.chatMessages.length, // MODIFIED: Use widget.chatMessages
+                  itemCount: currentMessages.length, // MODIFIED: Use the filtered list
                   itemBuilder: (context, index) {
-                    return _buildInsightCard(widget.chatMessages[index], index); // MODIFIED: Use widget.chatMessages
+                    return _buildInsightCard(currentMessages[index], index); // MODIFIED: Use the filtered list
                   },
                 ),
               ),

@@ -88,6 +88,16 @@ class _DashboardState extends State<Dashboard> {
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
       dislikes: 7,
     ),
+    ChatMessage(
+      sender: 'Snoops',
+      message:
+          "01K Drivers are the worst!",
+      route: 'J Mall',
+      timeAgo: '3 days ago',
+      imageUrl:
+          'https://plus.unsplash.com/premium_photo-1732333561328-fb8ff00d3665?q=80&w=747&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      likes: 2,
+    ),
   ];
 
   @override
