@@ -67,17 +67,15 @@ lib/
 
 ZAPAC was developed by:
 
-- 👩‍💻 [Princess Mikaela Borbajo](https://github.com/princessmikaelaborbajo)  
-- 👩‍💻 [Charisse Jamie](https://github.com/charissejamien)  
-- 👩‍💻 [Zoie Anne] – (GitHub profile link if any)
+- 👩‍💻 [Princess Mikaela Borbajo]
+- 👩‍💻 [Charisse Jamie]
+- 👩‍💻 [Zoie Estorba] 
 
 🚀 As part of our thesis project to solve local transportation problems using smart mobile tech.
 
 ---
 
 ## 📸 Screenshots
-
-> _[Insert screenshots or screen recordings of the app in action here]_
 
 ---
 
@@ -87,12 +85,16 @@ ZAPAC was developed by:
    ```bash
    git clone https://github.com/charissejamien/Zapac.git
    cd Zapac
+   
 2. Install dependencies
-'''bash
-flutter pub get
+```bash
+	flutter pub get
+```
+
 3. Run the app
-''''bash
+```bash
 flutter run
+```
 
 ⚠️ Make sure Firebase is correctly set up with your own google-services.json and GoogleService-Info.plist
 
