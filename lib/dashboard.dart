@@ -9,6 +9,7 @@ import 'add_insight_modal.dart';
 import 'search_bar_widget.dart';
 import 'map_utils.dart';
 import 'commenting_section.dart' show ChatMessage;
+
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
@@ -90,8 +91,7 @@ class _DashboardState extends State<Dashboard> {
     ),
     ChatMessage(
       sender: 'Snoops',
-      message:
-          "01K Drivers are the worst!",
+      message: "01K Drivers are the worst!",
       route: 'J Mall',
       timeAgo: '3 days ago',
       imageUrl:
@@ -103,11 +103,17 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
-    addMarker(_markers, _initialCameraPosition, 'cebu_city_marker', 'Cebu City');
+    addMarker(
+      _markers,
+      _initialCameraPosition,
+      'cebu_city_marker',
+      'Cebu City',
+    );
 
     _otherUserLocationSubscription = AuthManager().otherUserLocationStream
         .listen((location) {
-          if (mounted) { // ADDED mounted check
+          if (mounted) {
+            // ADDED mounted check
             updateOtherUserMarker(
               _markers,
               location,
@@ -140,18 +146,21 @@ class _DashboardState extends State<Dashboard> {
 
     // Use a safer approach for async operations after widget creation
     getCurrentLocationAndMarker(
-      _markers,
-      _mapController,
-      context,
-      isMounted: () => mounted,
-    ).then((_) {
-      if (mounted && _isMapReady) { // Check if widget is still mounted and map ready before calling setState
-        setState(() {});
-      }
-    }).catchError((error) {
-      // Handle any errors gracefully
-      print('Error in getCurrentLocationAndMarker: $error');
-    });
+          _markers,
+          _mapController,
+          context,
+          isMounted: () => mounted,
+        )
+        .then((_) {
+          if (mounted && _isMapReady) {
+            // Check if widget is still mounted and map ready before calling setState
+            setState(() {});
+          }
+        })
+        .catchError((error) {
+          // Handle any errors gracefully
+          print('Error in getCurrentLocationAndMarker: $error');
+        });
   }
 
   void _onItemTapped(int index) {
@@ -179,8 +188,9 @@ class _DashboardState extends State<Dashboard> {
 
   // Safe method to handle async location updates
   Future<void> _handleMyLocationPressed() async {
-    if (!mounted || !_isMapReady) return; // Check before starting async operation
-    
+    if (!mounted || !_isMapReady)
+      return; // Check before starting async operation
+
     try {
       await getCurrentLocationAndMarker(
         _markers,
@@ -188,7 +198,8 @@ class _DashboardState extends State<Dashboard> {
         context,
         isMounted: () => mounted,
       );
-      if (mounted && _isMapReady) { // Check again after async operation
+      if (mounted && _isMapReady) {
+        // Check again after async operation
         setState(() {});
       }
     } catch (error) {
@@ -203,10 +214,10 @@ class _DashboardState extends State<Dashboard> {
   }
 
   // Safe method to handle search place selection
+  // Replace your _handlePlaceSelected method with this debug version
   Future<void> _handlePlaceSelected(dynamic item) async {
-    if (!mounted) return; // Check before starting async operation
-    
-    print('Calling showRoute with: $item');
+    if (!mounted) return;
+
     try {
       await showRoute(
         item: item,
@@ -216,16 +227,12 @@ class _DashboardState extends State<Dashboard> {
         mapController: _mapController,
         context: context,
       );
-      if (mounted) { // Check again after async operation
+
+      if (mounted) {
         setState(() {});
       }
     } catch (error) {
       print('Error in showRoute: $error');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to show route')),
-        );
-      }
     }
   }
 
@@ -248,7 +255,8 @@ class _DashboardState extends State<Dashboard> {
           // Call your new showAddInsightModal function
           showAddInsightModal(
             context: context,
-            onInsightAdded: _addNewInsight, // Pass the callback to add new insight
+            onInsightAdded:
+                _addNewInsight, // Pass the callback to add new insight
           );
         },
         onMyLocationPressed: _handleMyLocationPressed, // Use the safe method
@@ -284,12 +292,11 @@ class _DashboardState extends State<Dashboard> {
             ),
 
             Positioned(
-              top: 8, // SafeArea already accounts for the status bar; keep only a small gap
+              top:
+                  8, // SafeArea already accounts for the status bar; keep only a small gap
               left: 16,
               right: 16,
-              child: SearchBar(
-                onPlaceSelected: _handlePlaceSelected,
-              ),
+              child: SearchBar(onPlaceSelected: _handlePlaceSelected),
             ),
           ],
         ),
