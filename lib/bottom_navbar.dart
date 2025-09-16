@@ -67,7 +67,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
               );
             },
             child: Icon(
-              Icons.bookmark,
+              Icons.favorite,
               size: 30,
               color: widget.selectedIndex == 1
                   ? selectedIconColor
