@@ -166,7 +166,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
               "Your new password must be different from previous used passwords.",
               style: TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             const Text("  Password", style: TextStyle(fontSize: 16)),
             TextField(
               controller: passwordController,
@@ -176,7 +176,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF3EEE6),
-                hintText: 'Enter Password',
                 // NEW: Dynamic border color
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -221,17 +220,14 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             const Text("  Confirm Password", style: TextStyle(fontSize: 16)),
             TextField(
               controller: confirmPasswordController,
               obscureText: _obscureConfirmPassword,
-              // NEW: onChanged listener for real-time validation feedback
-              // onChanged: (value) => _validateConfirmPasswordField(), // Listener already added in initState
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF3EEE6),
-                hintText: 'Enter New Password',
                 // NEW: Dynamic border color based on match
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),

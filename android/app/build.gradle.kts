@@ -24,10 +24,10 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.google_maps_in_flutter"
+        applicationId = "com.zapac.app"
         // Minimum Android version for Google Maps SDK
         // https://developers.google.com/maps/flutter-package/config#android
-        minSdk = 21
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = 1
         versionName = "1.0.0"

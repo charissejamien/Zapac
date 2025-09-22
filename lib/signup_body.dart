@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
+import 'auth_service.dart';
 class SignUpBody extends StatefulWidget {
   const SignUpBody({super.key});
 
@@ -174,7 +175,7 @@ class _SignUpBodyState extends State<SignUpBody> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          SizedBox(height: verticalSpacing * 3.0),
+          SizedBox(height: verticalSpacing * 5),
           Center(
             child: Text(
               "Create an Account",
@@ -186,14 +187,13 @@ class _SignUpBodyState extends State<SignUpBody> {
             ),
           ),
           SizedBox(height: verticalSpacing * 3),
-          const Text("   Email", style: TextStyle(fontSize: 15)),
+          const Text(" Email", style: TextStyle(fontSize: 15)),
           TextField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFFF3EEE6),
-              hintText: 'Enter your email',
               hintStyle: const TextStyle(fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               enabledBorder: OutlineInputBorder(
@@ -227,15 +227,14 @@ class _SignUpBodyState extends State<SignUpBody> {
               ),
             ),
           ),
-          const Text("   Password", style: TextStyle(fontSize: 15)),
+          SizedBox(height: verticalSpacing * 1),
+          const Text(" Password", style: TextStyle(fontSize: 15)),
           TextField(
             controller: passwordController,
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFFF3EEE6),
-              hintText: 'Enter Password',
-              hintStyle: const TextStyle(fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -280,14 +279,14 @@ class _SignUpBodyState extends State<SignUpBody> {
               ),
             ),
           ),
-          const Text("   Confirm Password", style: TextStyle(fontSize: 15)),
+          SizedBox(height: verticalSpacing * 1.5),
+          const Text(" Confirm Password", style: TextStyle(fontSize: 15)),
           TextField(
             controller: confirmPasswordController,
             obscureText: _obscureConfirmPassword,
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFFF3EEE6),
-              hintText: 'Confirm Password',
               hintStyle: const TextStyle(fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               enabledBorder: OutlineInputBorder(
@@ -365,7 +364,7 @@ class _SignUpBodyState extends State<SignUpBody> {
               ),
             ),
           ),
-          SizedBox(height: verticalSpacing * 2),
+          SizedBox(height: verticalSpacing * 5),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Row(
@@ -386,7 +385,7 @@ class _SignUpBodyState extends State<SignUpBody> {
               ],
             ),
           ),
-          SizedBox(height: verticalSpacing * 2),
+          SizedBox(height: verticalSpacing * 3.5),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -394,36 +393,52 @@ class _SignUpBodyState extends State<SignUpBody> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-                    onPressed: _showComingSoonSnackBar,
-                    icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 20),
-                    label: const Text("Google", style: TextStyle(fontSize: 12, color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E2E2E),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
+  onPressed: () async {
+    final userCredential = await AuthService().signInWithGoogle();
+    if (userCredential != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthScreen()),
+      );
+    }
+  },
+  icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 20),
+  label: const Text("Google", style: TextStyle(fontSize: 12, color: Colors.white)),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF2E2E2E),
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    elevation: 0,
+  ),
+),
                 ),
               ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-                    onPressed: _showComingSoonSnackBar,
-                    icon: const Icon(Icons.facebook, color: Colors.blue, size: 20),
-                    label: const Text("Facebook", style: TextStyle(fontSize: 12, color: Colors.black)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
+  onPressed: () async {
+    final userCredential = await AuthService().signInWithFacebook();
+    if (userCredential != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthScreen()),
+      );
+    }
+  },
+  icon: const Icon(Icons.facebook, color: Colors.blue, size: 20),
+  label: const Text("Facebook", style: TextStyle(fontSize: 12, color: Colors.black)),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    elevation: 0,
+  ),
+),
                 ),
               ),
             ],

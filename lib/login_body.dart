@@ -116,7 +116,7 @@ class _LoginBodyState extends State<LoginBody> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          SizedBox(height: verticalSpacing * 1.5),
+          SizedBox(height: verticalSpacing * 3),
           const Center(
             child: Text(
               "Welcome Back!",
@@ -205,7 +205,7 @@ class _LoginBodyState extends State<LoginBody> {
             ),
           ),
 
-          SizedBox(height: verticalSpacing * 1.5),
+          SizedBox(height: verticalSpacing * 2.5),
           Center(
             child: RichText(
               text: TextSpan(
@@ -229,7 +229,7 @@ class _LoginBodyState extends State<LoginBody> {
               ),
             ),
           ),
-          SizedBox(height: verticalSpacing * 1.5),
+          SizedBox(height: verticalSpacing * 2),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Row(
@@ -247,7 +247,7 @@ class _LoginBodyState extends State<LoginBody> {
               ],
             ),
           ),
-          SizedBox(height: verticalSpacing * 1.5),
+          SizedBox(height: verticalSpacing * 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

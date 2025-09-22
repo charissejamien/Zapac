@@ -102,14 +102,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             const SizedBox(height: 80),
             const Text("  Email", style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF3EEE6),
-                hintText: 'Enter Email',
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,

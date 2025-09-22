@@ -1,4 +1,4 @@
-package com.example.zapac
+package com.zapac.app
 
 import io.flutter.embedding.android.FlutterActivity
 

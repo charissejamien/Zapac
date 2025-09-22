@@ -166,7 +166,7 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
                     maxLength: 1,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 24),
+                    style: const TextStyle(fontSize: 22),
                     decoration: InputDecoration(
                       counterText: "",
                       filled: true,
