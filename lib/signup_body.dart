@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
-import 'auth_service.dart';
 class SignUpBody extends StatefulWidget {
   const SignUpBody({super.key});
 
@@ -393,15 +392,7 @@ class _SignUpBodyState extends State<SignUpBody> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-  onPressed: () async {
-    final userCredential = await AuthService().signInWithGoogle();
-    if (userCredential != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const AuthScreen()),
-      );
-    }
-  },
+  onPressed: () {},
   icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 20),
   label: const Text("Google", style: TextStyle(fontSize: 12, color: Colors.white)),
   style: ElevatedButton.styleFrom(
@@ -419,15 +410,7 @@ class _SignUpBodyState extends State<SignUpBody> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: ElevatedButton.icon(
-  onPressed: () async {
-    final userCredential = await AuthService().signInWithFacebook();
-    if (userCredential != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const AuthScreen()),
-      );
-    }
-  },
+  onPressed: () {},
   icon: const Icon(Icons.facebook, color: Colors.blue, size: 20),
   label: const Text("Facebook", style: TextStyle(fontSize: 12, color: Colors.black)),
   style: ElevatedButton.styleFrom(
